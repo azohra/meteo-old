@@ -12,7 +12,7 @@ that render it — natively, in your design system, with no vendor iframe.
 |---|---|
 | `@azohra/meteo/station` | The isomorphic root: the wire contract (zod), pure derivations (period stats, compass, freshness, unit and threshold conversion), and framework-free chart geometry. |
 | `@azohra/meteo/station/server` | Vendor adapters plus the custom-adapter interface and `defineStationAdapter`, data-level `loadStationFeed()` / `loadStationCurrent()`, and the mountable feed handler. Server-only, so it can never leak into a client bundle. |
-| `@azohra/meteo/station/react` | `StationFeedProvider`, polling hooks (`useStation`, `useStationFeed`, `useStationCurrent`), and the component set — `WindStation`, `CurrentConditions`, `WindHistoryChart`, `TrendChart`, `WindRose`, `StationCompare`, `AirMatrix`, `FreshnessBadge`. |
+| `@azohra/meteo/station/react` | `StationFeedProvider`, polling hooks (`useStation`, `useStationFeed`, `useStationCurrent`), the component set — `WindStation`, `CurrentConditions`, `WindHistoryChart`, `TrendChart`, `WindRose`, `StationCompare`, `StationStrip`, `AirMatrix`, `FreshnessBadge` — and an atoms layer of inline primitives (`Speed`, `Gust`, `Lull`, `Temperature`, `Pressure`, `Direction`, `UpdatedAt`, `BandChip`, `Dial`, `Sparkline`) for composing your own layouts. |
 | `@azohra/meteo/station/react/styles.css` | The default skin (an intentional side effect). |
 
 ## Taste

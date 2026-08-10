@@ -213,6 +213,12 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+/* Strips stack; each line is the library's own chrome. */
+.demo-strips {
+  display: grid;
+  gap: 0.7rem;
+}
+
 .demo-panel {
   padding: 1rem 1.1rem;
   background: var(--meteo-surface, #ffffff);
@@ -227,6 +233,50 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--meteo-muted, #62717f);
+}
+
+/* ---- Primitives ---- */
+
+.demo-primitives {
+  display: grid;
+  gap: 1.1rem;
+}
+
+/* The atoms carry no layout opinions; the sentence is the consumer's. */
+.demo-sentence {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.demo-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* The classic board row: a strip stating the reading, a sparkline showing
+ * the six hours behind it. */
+.demo-board {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.demo-board-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.demo-board-row > .meteo-strip {
+  flex: 1;
+  min-width: 0;
+}
+
+.demo-dials {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 /* ---- Footer ---- */

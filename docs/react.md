@@ -73,6 +73,7 @@ Per-station components take `station` (or `stationId`); fleet components take `s
 | `TrendChart` | Temperature (°C) or sea-level pressure (hPa) over history. `series: "temperature" \| "pressure"`; null gaps break the trace, never interpolated. No `unit` — the units are the series' own |
 | `WindRose` | Direction shares. `station`/`stationId` or raw `points`, `sectorCount`, `thresholds`, `favorableDirections`. No `unit` — the rose shows percentages |
 | `StationCompare` | One row per `stations` entry; unavailable rows keep their geometry. `servedAt`, `receivedAtMs` |
+| `StationStrip` | One station on one line — name, wind, lull/gust, FROM, temp, updated + freshness. `station`/`stationId`, `servedAt`, `receivedAtMs`. Absent values dash in place; a capability the station lacks omits its cell; an unavailable station keeps the line, reason in words |
 | `AirMatrix` | Humidity → lightning behind a live disclosure; columns only for conditions-capable `stations` |
 | `FreshnessBadge` | A dot and a word, from `useFreshness` |
 
@@ -108,6 +109,43 @@ may wrap through north) draws a thin ring outside the rose's grid: favorable
 arcs in `--wind-favorable`, the remainder in `--wind-unfavorable`. The ring
 judges direction, the petals report distribution — the two never mix.
 
+## Primitives
+
+The smallest reading fragments as standalone inline elements, for composing
+your own layouts out of package-consistent pieces. They share the component
+set's discipline: a value the station cannot report is an em dash **in
+place** (a lacking capability and an unavailable station earn the same dash),
+calm is said in the calm word — the dash on a direction is reserved for a
+dead vane on a blowing reading — and shown speeds convert to the display unit
+while the wire value rides the `<data>` element's `value` attribute in m/s,
+unrounded.
+
+| Primitive | Renders |
+|---|---|
+| `Speed` / `Gust` / `Lull` | The converted integer + unit word in a `<data>`; gust and lull dash without the `gustLull` capability |
+| `Temperature` | One decimal with the degree word |
+| `Pressure` | Sea-level pressure, one decimal hPa (needs the `conditions` capability) |
+| `Direction` | Arrow glyph + compass point + rounded degrees; calm in a word, dead vane dashes. The aria sentence spells the point out (`compassSpoken` + `aria.direction` strings) |
+| `UpdatedAt` | Ticking relative age ("just now", "3 min ago"; the `updated` strings group), falling back to the absolute `formatTime` words past ~6 hours. Server-anchored when `servedAt`/`receivedAtMs` exist |
+| `BandChip` | The reading graded against `thresholds`, worn as a chip with `data-band`. Your `labels` (values.length + 1 words) supply the vocabulary; without labels the chip states the converted speed. Calm says the calm word, ungraded |
+| `Dial` | The instrument's gauge alone — `CurrentConditions` without flanks or rows. `size` scales the rendered box, never the drawing |
+| `Sparkline` | Six hours at word size: lull–gust band + average trace, the big chart's dropout and null-pair honesty, `thresholds` grading per segment. A quiet station holds the same fixed box |
+
+They compose inline — a sentence, a table cell, a board row:
+
+```tsx
+<StationFeedProvider feed={feed} receivedAtMs={receivedAtMs} unit="knots">
+  <p>
+    <Speed /> <Direction />, gusting <Gust />, <UpdatedAt />
+  </p>
+</StationFeedProvider>
+```
+
+Provider resolution is the standard one: an explicit `station` prop → a
+`stationId` looked up in the ambient feed → `primaryStationId` →
+`stations[0]`; resolving nothing throws the wiring error, and every primitive
+still works with zero provider via explicit props.
+
 ## SSR and App Router
 
 `"use client"` is baked into every react module — import straight into an App Router
@@ -124,10 +162,31 @@ const feed = parseStationFeedJson(body); // from @azohra/meteo/station
 // pass { feed, receivedAtMs: Date.now() } to useStation's / useStationFeed's initialData
 ```
 
-## Board cells recipe
+## Board cells
 
-A compact per-station row — primary station reading plus freshness — derived straight off
-the feed, for overview boards that link into full pages:
+For a compact per-station line on an overview board, use `StationStrip` — it
+resolves its station like every other per-station component, and the dashes,
+capability gating, and freshness badge come with it:
+
+```tsx
+import { StationFeedProvider, StationStrip, useStationFeed } from "@azohra/meteo/station/react";
+
+function BoardRow({ url }: { url: string }) {
+  const { feed, receivedAtMs } = useStationFeed(url);
+  return (
+    <div className="meteo-root">
+      <StationFeedProvider feed={feed} receivedAtMs={receivedAtMs} unit="knots">
+        {feed?.stations.map((station) => (
+          <StationStrip key={station.id} stationId={station.id} />
+        ))}
+      </StationFeedProvider>
+    </div>
+  );
+}
+```
+
+The recipe below remains for **fully custom cells** — when the board's markup
+is yours and the library supplies only the data, the units, and the badge:
 
 ```tsx
 import { speedFromMps, speedUnitLabel, stationFreshnessThresholds } from "@azohra/meteo/station";

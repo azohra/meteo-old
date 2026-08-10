@@ -15,9 +15,10 @@
  * every stat under the chart shares the chart's window. */
 import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-import { speedFromMps, periodSummary, stationFreshnessThresholds } from "../../index.js";
+import { periodSummary, stationFreshnessThresholds } from "../../index.js";
 import type { SpeedUnit, Station } from "../../index.js";
 import { useFreshness } from "../hooks/useFreshness.js";
+import { roundSpeed } from "../lib/cells.js";
 import { EM_DASH, defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
 import type { FormatTime, StationStringOverrides } from "../lib/strings.js";
 import type { SpeedThresholds } from "../lib/thresholds.js";
@@ -251,7 +252,7 @@ export function WindStationSummary({
   if (summary == null) return null;
 
   const capabilities = station.capabilities;
-  const shown = (averageMps: number) => Math.round(speedFromMps(averageMps, resolvedUnit));
+  const shown = (averageMps: number) => roundSpeed(averageMps, resolvedUnit);
   const unitLabel = words.speedUnits[resolvedUnit];
   const entries: { label: string; value: string }[] = [
     { label: words.averageLabel, value: `${shown(summary.averageMps)} ${unitLabel}` },

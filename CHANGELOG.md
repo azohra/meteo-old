@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.1.1 — 2026-08-10
+
+The primitives layer: the atoms the organisms were always made of.
+
+- **Text atoms**: `Speed`, `Gust`, `Lull`, `Temperature`, `Pressure`,
+  `Direction`, ticking `UpdatedAt`, and `BandChip` (your band labels, your
+  thresholds) — inline, provider-resolvable, `<data>`-backed, honest about
+  absence.
+- **Visual atoms**: `Sparkline` (gap-honest inline history, optional banding)
+  and `Dial` (the gauge alone; `CurrentConditions` now composes it).
+- **`StationStrip`**: the per-station one-line reading — the board-row
+  component the compare table's rows always were.
+- One authority per formatting rule: strip, table, atoms, and instruments
+  share the same cell helpers, so a dash, a calm word, or a rounded speed
+  can never disagree across components.
+- New i18n strings groups: relative time (`updated`), spoken compass
+  (`compassSpoken`), and direction/sparkline aria sentences.
+
+
 ## 0.1.0 — 2026-08-09
 
 First release of Azohra Meteo (`@azohra/meteo`), shipping the **station**

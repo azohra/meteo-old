@@ -14,6 +14,7 @@ import {
   AirMatrix,
   StationCompare,
   StationFeedProvider,
+  StationStrip,
   TrendChart,
   WindStation,
   defaultStrings,
@@ -67,6 +68,7 @@ describe("server rendering", () => {
         >
           <WindStation />
           <StationCompare />
+          <StationStrip />
           <AirMatrix />
         </StationFeedProvider>
       </div>,
@@ -74,6 +76,7 @@ describe("server rendering", () => {
     /* The provider resolved the primary station and threaded the defaults. */
     expect(html).toContain("Test Station");
     expect(html).toContain("wind-dial-arc wind-band-1");
+    expect(html).toContain("meteo-strip");
     expect(html).toContain("meteo-air-trigger");
     expect(html).toContain(defaultStrings.freshness.live);
   });

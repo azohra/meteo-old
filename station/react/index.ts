@@ -3,13 +3,31 @@
  * "use client" directive here and in every module makes the package land on
  * the client side of an App Router boundary without consumer wrappers. */
 export { AirMatrix } from "./components/AirMatrix.js";
+/* The text atoms: the smallest reading fragments as standalone inline
+ * elements, for consumers composing their own layouts out of
+ * package-consistent pieces. */
+export {
+  BandChip,
+  Direction,
+  Gust,
+  Lull,
+  Pressure,
+  Speed,
+  Temperature,
+  UpdatedAt,
+} from "./components/atoms.js";
 export { CurrentConditions } from "./components/CurrentConditions.js";
+/* The visual atoms: the instrument's gauge alone, and the history chart at
+ * word size. */
+export { Dial } from "./components/Dial.js";
 export { FreshnessBadge } from "./components/FreshnessBadge.js";
+export { Sparkline } from "./components/Sparkline.js";
 export { StationCompare } from "./components/StationCompare.js";
 /* The ambient default layer: components read feed/clock/display defaults
  * from the provider and explicit props always override it. */
 export { StationFeedProvider, useStationFeedContext } from "./components/StationFeedProvider.js";
 export type { StationFeedContextValue } from "./components/StationFeedProvider.js";
+export { StationStrip } from "./components/StationStrip.js";
 export { TrendChart } from "./components/TrendChart.js";
 export type { TrendSeries } from "./components/TrendChart.js";
 export { WindArrow } from "./components/WindArrow.js";

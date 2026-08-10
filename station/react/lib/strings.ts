@@ -5,7 +5,7 @@
  * labels, routed through strings so they are i18n-able like every other word
  * (derive's speedUnitLabel seeds the defaults). */
 import { speedUnitLabel } from "../../index.js";
-import type { FreshnessStatus, SpeedUnit, UnavailableReason } from "../../index.js";
+import type { CompassPoint, FreshnessStatus, SpeedUnit, UnavailableReason } from "../../index.js";
 
 export const EM_DASH = "—";
 
@@ -38,6 +38,18 @@ export type StationStrings = {
   elevation: (metres: number) => string;
   percentCalm: (percent: number) => string;
   percentShare: (percent: number) => string;
+  /* Spelled-out compass words for assistive tech: "NW 305°" reads as
+   * letters; "from northwest, 305 degrees" reads as weather. The visible
+   * sixteen abbreviations come from compassDirection; these are their spoken
+   * forms, swappable like every other word. */
+  compassSpoken: Record<CompassPoint, string>;
+  /* UpdatedAt's ticking relative age; past ~6 hours it yields to the
+   * absolute formatTime words. */
+  updated: {
+    justNow: string;
+    minutesAgo: (minutes: number) => string;
+    hoursAgo: (hours: number) => string;
+  };
   freshness: Record<FreshnessStatus, string>;
   reasons: Record<UnavailableReason, string>;
   /* Display labels per speed unit — what the dial hub, chart readout, and
@@ -94,12 +106,16 @@ export type StationStrings = {
     chart: (stationName: string) => string;
     compare: (stationCount: number) => string;
     current: (stationName: string) => string;
+    /* The Direction atom's sentence; `spoken` is the compassSpoken word. */
+    direction: (spoken: string, deg: number) => string;
     readout: (stationName: string) => string;
     rose: (stationName: string) => string;
     /* Appended to the rose label when a favorable ring is drawn; `sectors`
      * is the pre-joined "260°–340°, …" list. */
     roseFavorable: (sectors: string) => string;
     roseGeneric: string;
+    sparkline: (stationName: string) => string;
+    strip: (stationName: string) => string;
     summary: (endedAtFormatted: string) => string;
     trend: (stationName: string, seriesName: string) => string;
   };
@@ -130,6 +146,29 @@ export const defaultStrings: StationStrings = {
   elevation: (metres) => `${metres} m`,
   percentCalm: (percent) => `${percent}% calm`,
   percentShare: (percent) => `${percent}%`,
+  compassSpoken: {
+    N: "north",
+    NNE: "north-northeast",
+    NE: "northeast",
+    ENE: "east-northeast",
+    E: "east",
+    ESE: "east-southeast",
+    SE: "southeast",
+    SSE: "south-southeast",
+    S: "south",
+    SSW: "south-southwest",
+    SW: "southwest",
+    WSW: "west-southwest",
+    W: "west",
+    WNW: "west-northwest",
+    NW: "northwest",
+    NNW: "north-northwest",
+  },
+  updated: {
+    justNow: "just now",
+    minutesAgo: (minutes) => `${minutes} min ago`,
+    hoursAgo: (hours) => `${hours} hr ago`,
+  },
   freshness: {
     live: "Live",
     aging: "Aging",
@@ -197,10 +236,13 @@ export const defaultStrings: StationStrings = {
       `Wind history at ${stationName}: the band spans lull to gust, the line is the average, and the vanes below point where the wind blew to.`,
     compare: (stationCount) => `Live readings from ${stationCount} stations`,
     current: (stationName) => `Current conditions at ${stationName}`,
+    direction: (spoken, deg) => `from ${spoken}, ${deg} degrees`,
     readout: (stationName) => `Inspected reading at ${stationName}`,
     rose: (stationName) => `Wind direction distribution at ${stationName}`,
     roseFavorable: (sectors) => `The outer ring marks favorable directions: from ${sectors}.`,
     roseGeneric: "Wind direction distribution",
+    sparkline: (stationName) => `six hours of wind at ${stationName}`,
+    strip: (stationName) => `Latest reading at ${stationName}`,
     summary: (endedAtFormatted) => `Summary of the period ending ${endedAtFormatted}`,
     trend: (stationName, seriesName) => `${seriesName} history at ${stationName}`,
   },
@@ -208,7 +250,12 @@ export const defaultStrings: StationStrings = {
 
 /* Nested groups merge shallowly, so overriding one reason keeps the rest. */
 export type StationStringOverrides = Partial<
-  Omit<StationStrings, "freshness" | "reasons" | "speedUnits" | "table" | "air" | "aria"> & {
+  Omit<
+    StationStrings,
+    "compassSpoken" | "updated" | "freshness" | "reasons" | "speedUnits" | "table" | "air" | "aria"
+  > & {
+    compassSpoken: Partial<StationStrings["compassSpoken"]>;
+    updated: Partial<StationStrings["updated"]>;
     freshness: Partial<StationStrings["freshness"]>;
     reasons: Partial<StationStrings["reasons"]>;
     speedUnits: Partial<StationStrings["speedUnits"]>;
@@ -223,6 +270,8 @@ export function resolveStrings(overrides?: StationStringOverrides): StationStrin
   return {
     ...defaultStrings,
     ...overrides,
+    compassSpoken: { ...defaultStrings.compassSpoken, ...overrides.compassSpoken },
+    updated: { ...defaultStrings.updated, ...overrides.updated },
     freshness: { ...defaultStrings.freshness, ...overrides.freshness },
     reasons: { ...defaultStrings.reasons, ...overrides.reasons },
     speedUnits: { ...defaultStrings.speedUnits, ...overrides.speedUnits },
@@ -245,6 +294,8 @@ export function mergeStringOverrides(
   return {
     ...outer,
     ...inner,
+    compassSpoken: { ...outer.compassSpoken, ...inner.compassSpoken },
+    updated: { ...outer.updated, ...inner.updated },
     freshness: { ...outer.freshness, ...inner.freshness },
     reasons: { ...outer.reasons, ...inner.reasons },
     speedUnits: { ...outer.speedUnits, ...inner.speedUnits },

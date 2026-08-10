@@ -19,10 +19,18 @@ import { speedUnitLabel } from "@azohra/meteo/station";
 import type { SpeedThresholds, SpeedUnit } from "@azohra/meteo/station";
 import {
   AirMatrix,
+  BandChip,
   CurrentConditions,
+  Dial,
+  Direction,
+  Gust,
+  Sparkline,
+  Speed,
   StationCompare,
   StationFeedProvider,
+  StationStrip,
   TrendChart,
+  UpdatedAt,
   WindHistoryChart,
   WindRose,
   WindStation,
@@ -35,6 +43,11 @@ import { buildDemoFeed } from "./fixtures";
  * converts onto the m/s wire once, internally, whatever display unit the
  * switcher picks. */
 const THRESHOLDS: SpeedThresholds = { unit: "kmh", values: [12, 20, 28] };
+
+/* The chip row grades finer: five words need four bounds — the extra 5 km/h
+ * threshold separates barely-moving air from a light breeze. */
+const CHIP_THRESHOLDS: SpeedThresholds = { unit: "kmh", values: [5, 12, 20, 28] };
+const CHIP_LABELS = ["calm", "light", "fine", "strong", "nuked"];
 
 /* Sailors, drivers, US visitors — the wire stays m/s either way. */
 const UNIT_CHOICES: SpeedUnit[] = ["kmh", "knots", "mph"];
@@ -88,6 +101,18 @@ const SECTIONS: { id: string; title: string; nav: string; note: string }[] = [
     title: "The fleet, compared",
     nav: "Compare",
     note: "One row per station, unavailable rows keep their geometry — no props at all, the provider supplies everything.",
+  },
+  {
+    id: "strips",
+    title: "Strips",
+    nav: "Strips",
+    note: "StationStrip is the compare row as a standalone one-liner — provider-fed here, and the outage keeps its line at full height.",
+  },
+  {
+    id: "primitives",
+    title: "Primitives",
+    nav: "Primitives",
+    note: "The atoms compose inline in your own sentence; BandChip wears the club's vocabulary; Sparkline rides beside StationStrip in the classic board-row pairing; the bare Dial scales without redrawing.",
   },
   {
     id: "explicit",
@@ -263,6 +288,58 @@ export default function App() {
           <section className="demo-section" id="compare">
             <SectionHead id="compare" />
             <StationCompare />
+          </section>
+
+          <section className="demo-section" id="strips">
+            <SectionHead id="strips" />
+            <div className="demo-strips">
+              <StationStrip stationId="launch-ridge" />
+              <StationStrip stationId="summit-logger" />
+              <StationStrip stationId="north-bluff" />
+            </div>
+          </section>
+
+          <section className="demo-section" id="primitives">
+            <SectionHead id="primitives" />
+            <div className="demo-primitives">
+              <div className="demo-panel">
+                <h3>Atoms in a sentence — the feed's primary station</h3>
+                <p className="demo-sentence">
+                  <Speed /> <Direction />, gusting <Gust />, <UpdatedAt />
+                </p>
+              </div>
+              <div className="demo-panel">
+                <h3>Band chips — five words over 5 · 12 · 20 · 28 km/h</h3>
+                <div className="demo-chip-row">
+                  {feed.stations.map((station) => (
+                    <BandChip
+                      key={station.id}
+                      labels={CHIP_LABELS}
+                      stationId={station.id}
+                      thresholds={CHIP_THRESHOLDS}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="demo-panel">
+                <h3>Strips with sparklines — the board-row pairing</h3>
+                <div className="demo-board">
+                  {feed.stations.map((station) => (
+                    <div className="demo-board-row" key={station.id}>
+                      <StationStrip stationId={station.id} />
+                      <Sparkline stationId={station.id} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="demo-panel">
+                <h3>The bare dial, two sizes — same 160-unit drawing</h3>
+                <div className="demo-dials">
+                  <Dial size={120} stationId="launch-ridge" />
+                  <Dial size={200} stationId="launch-ridge" />
+                </div>
+              </div>
+            </div>
           </section>
         </StationFeedProvider>
 

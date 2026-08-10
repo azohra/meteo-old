@@ -7,6 +7,7 @@ import {
   CurrentConditions,
   StationCompare,
   StationFeedProvider,
+  StationStrip,
   WindHistoryChart,
   WindRose,
   WindStation,
@@ -274,6 +275,130 @@ describe("StationCompare", () => {
     expect(container.querySelector(".meteo-freshness")?.textContent).toBe(
       defaultStrings.freshness.aging,
     );
+  });
+});
+
+describe("StationStrip", () => {
+  it("renders one line via explicit props: linked name, wind, lull/gust, FROM, temp, updated", () => {
+    const feed = feedFixture();
+    const { container } = render(
+      <StationStrip receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()} />,
+    );
+    const strip = container.querySelector(".meteo-strip");
+    expect(strip?.getAttribute("role")).toBe("group");
+    expect(strip?.getAttribute("aria-label")).toBe(defaultStrings.aria.strip("Test Station"));
+    expect(container.querySelector(".meteo-strip-station a")?.getAttribute("href")).toBe(
+      "https://example.com/stations/test",
+    );
+    expect(container.querySelector(".meteo-strip-wind strong")?.textContent).toBe("18");
+    expect(container.querySelector(".meteo-strip-wind small")?.textContent).toBe("km/h");
+    expect(container.querySelector(".meteo-strip-lull")?.textContent).toContain("11");
+    expect(container.querySelector(".meteo-strip-gust")?.textContent).toContain("24");
+    expect(container.querySelector(".meteo-strip-from")?.textContent).toContain("NW");
+    expect(container.querySelector(".meteo-strip-from")?.textContent).toContain("312°");
+    expect(container.querySelector(".meteo-strip-temp")?.textContent).toContain("14.2");
+    expect(container.querySelector(".meteo-strip-time")).not.toBeNull();
+    expect(container.querySelector(".meteo-freshness")).not.toBeNull();
+  });
+
+  it("dashes absent values in place but omits cells for missing capabilities", () => {
+    /* Capable but momentarily dark sensors: the cells hold, wearing dashes. */
+    const dark = okStation({
+      reading: { ...okStation().reading, gustMps: null, lullMps: null, temperatureC: null },
+    });
+    const { container: dashed } = render(
+      <StationStrip receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={dark} />,
+    );
+    expect(dashed.querySelector(".meteo-strip-lull")?.textContent).toContain("—");
+    expect(dashed.querySelector(".meteo-strip-gust")?.textContent).toContain("—");
+    expect(dashed.querySelector(".meteo-strip-temp")?.textContent).toBe("—");
+
+    /* Capabilities the station lacks omit the cells entirely. */
+    const bare = okStation({
+      capabilities: { gustLull: false, temperature: false, conditions: false, history: true },
+    });
+    const { container: omitted } = render(
+      <StationStrip receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={bare} />,
+    );
+    expect(omitted.querySelector(".meteo-strip-lull")).toBeNull();
+    expect(omitted.querySelector(".meteo-strip-gust")).toBeNull();
+    expect(omitted.querySelector(".meteo-strip-temp")).toBeNull();
+    expect(omitted.querySelector(".meteo-strip-wind")).not.toBeNull();
+  });
+
+  it("says calm below the WMO threshold and keeps the dash for a dead vane", () => {
+    const calmish = okStation({
+      reading: { ...okStation().reading, averageMps: 1.5 / 3.6, directionDeg: 200 },
+    });
+    const { container: calm } = render(
+      <StationStrip receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={calmish} />,
+    );
+    expect(calm.querySelector(".meteo-strip-from")?.textContent).toBe(defaultStrings.calm);
+
+    const vaneless = okStation({
+      reading: { ...okStation().reading, averageMps: 12 / 3.6, directionDeg: null },
+    });
+    const { container: dead } = render(
+      <StationStrip receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={vaneless} />,
+    );
+    expect(dead.querySelector(".meteo-strip-from")?.textContent).toBe("—");
+  });
+
+  it("renders the unavailable arm: name held, reason words in place of the cells", () => {
+    const { container } = render(
+      <StationStrip receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={downStation()} />,
+    );
+    expect(container.querySelector(".meteo-strip")?.getAttribute("data-status")).toBe(
+      "unavailable",
+    );
+    expect(container.querySelector(".meteo-strip-station")?.textContent).toBe("Down Station");
+    expect(container.querySelector(".meteo-strip-reason")?.textContent).toBe(
+      defaultStrings.reasons.upstream_error,
+    );
+    expect(container.querySelector(".meteo-strip-wind")).toBeNull();
+    expect(container.querySelector(".meteo-strip-updated")).toBeNull();
+  });
+
+  it("converts displayed speeds to knots while the wire stays m/s", () => {
+    /* 18.4 / 24.1 / 11.2 km/h → 10 / 13 / 6 kn. */
+    const { container } = render(
+      <StationStrip
+        receivedAtMs={NOW_MS}
+        servedAt={feedFixture().servedAt}
+        station={okStation()}
+        unit="knots"
+      />,
+    );
+    expect(container.querySelector(".meteo-strip-wind strong")?.textContent).toBe("10");
+    expect(container.querySelector(".meteo-strip-wind small")?.textContent).toBe("kn");
+    expect(container.querySelector(".meteo-strip-lull")?.textContent).toContain("6");
+    expect(container.querySelector(".meteo-strip-gust")?.textContent).toContain("13");
+  });
+
+  it("resolves its station from the provider: primary propless, stationId by lookup", () => {
+    const provided = (ui: ReactNode) =>
+      render(
+        <StationFeedProvider feed={feedFixture()} receivedAtMs={NOW_MS} unit="knots">
+          {ui}
+        </StationFeedProvider>,
+      );
+    /* primaryStationId is "test-station", in the provider's knots. */
+    const { container: primary } = provided(<StationStrip />);
+    expect(primary.querySelector(".meteo-strip-station")?.textContent).toBe("Test Station");
+    expect(primary.querySelector(".meteo-strip-wind strong")?.textContent).toBe("10");
+    expect(primary.querySelector(".meteo-freshness")).not.toBeNull();
+
+    const { container: byId } = provided(<StationStrip stationId="down-station" />);
+    expect(byId.querySelector(".meteo-strip")?.getAttribute("data-status")).toBe("unavailable");
+  });
+
+  it("throws a wiring error when nothing resolves a station", () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(() => render(<StationStrip />)).toThrow(/<StationStrip> resolved no station/);
+    } finally {
+      quiet.mockRestore();
+    }
   });
 });
 

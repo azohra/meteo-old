@@ -9,18 +9,19 @@
  * A real table for screen readers: roles are explicit because grid display
  * drops the implicit ones. */
 import type { SpeedUnit, Station } from "../../index.js";
-import {
-  compassDirection,
-  speedFromMps,
-  isCalm,
-  stationFreshnessThresholds,
-} from "../../index.js";
+import { stationFreshnessThresholds } from "../../index.js";
 import { useFreshness } from "../hooks/useFreshness.js";
-import { EM_DASH, defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
+import {
+  DirectionCell,
+  StationNameLink,
+  optionalSpeed,
+  roundSpeed,
+  temperatureText,
+} from "../lib/cells.js";
+import { defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
 import type { FormatTime, StationStringOverrides, StationStrings } from "../lib/strings.js";
 import { FreshnessBadge } from "./FreshnessBadge.js";
 import { requireResolved, useStationFeedContext } from "./StationFeedProvider.js";
-import { WindArrow } from "./WindArrow.js";
 
 export function StationCompare({
   stations: stationsProp,
@@ -105,7 +106,6 @@ function CompareRow({
   unit: SpeedUnit;
   words: StationStrings;
 }) {
-  const shown = (averageMps: number) => Math.round(speedFromMps(averageMps, unit));
   const status = useFreshness(
     station.reading?.observedAt ?? null,
     servedAt,
@@ -116,47 +116,31 @@ function CompareRow({
     <div className="wind-compare-row" data-status={station.status} role="row">
       <span className="wind-compare-station" role="cell">
         <strong>
-          {station.pageUrl ? (
-            <a href={station.pageUrl} rel="noreferrer" target="_blank">
-              {station.name}
-            </a>
-          ) : (
-            station.name
-          )}
+          <StationNameLink station={station} />
         </strong>
         <small>{station.sourceLabel}</small>
       </span>
       {station.status === "ok" ? (
         <>
           <span className="wind-compare-wind" role="cell">
-            <strong>{shown(station.reading.averageMps)}</strong>
+            <strong>{roundSpeed(station.reading.averageMps, unit)}</strong>
             <small>{words.speedUnits[unit]}</small>
           </span>
           <span className="wind-compare-lull" role="cell">
-            {station.reading.lullMps == null ? EM_DASH : shown(station.reading.lullMps)}
+            {optionalSpeed(station.reading.lullMps, unit)}
           </span>
           <span className="wind-compare-gust" role="cell">
-            {station.reading.gustMps == null ? EM_DASH : shown(station.reading.gustMps)}
+            {optionalSpeed(station.reading.gustMps, unit)}
           </span>
-          {/* Calm (WMO: below 0.5 m/s) withholds direction, said in a word;
-           * a null on a blowing reading is a broken vane and earns the dash. */}
           <span className="wind-compare-from" role="cell">
-            {isCalm(station.reading.averageMps) ? (
-              words.calm
-            ) : station.reading.directionDeg == null ? (
-              EM_DASH
-            ) : (
-              <>
-                <WindArrow deg={station.reading.directionDeg} />{" "}
-                {compassDirection(station.reading.directionDeg)}{" "}
-                {Math.round(station.reading.directionDeg)}°
-              </>
-            )}
+            <DirectionCell
+              averageMps={station.reading.averageMps}
+              directionDeg={station.reading.directionDeg}
+              words={words}
+            />
           </span>
           <span className="wind-compare-temp" role="cell">
-            {station.reading.temperatureC == null
-              ? EM_DASH
-              : `${station.reading.temperatureC.toFixed(1)} ${words.degC}`}
+            {temperatureText(station.reading.temperatureC, words)}
           </span>
           <span className="wind-compare-updated" role="cell">
             <span className="wind-compare-time">

@@ -132,6 +132,57 @@
   color: var(--meteo-freshness-stale, #bb1d1d);
 }
 
+/* ---------- text atoms ---------- */
+
+/* Inline reading fragments; no layout opinions beyond inline display. */
+
+.meteo-value,
+.meteo-direction,
+.meteo-updated,
+.meteo-band-chip {
+  font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: var(--meteo-ink, #17232e);
+}
+
+/* The unit hangs quieter beside the number, like the dial hub's unit line. */
+.meteo-value .meteo-unit {
+  font-size: 0.72em;
+  font-weight: 500;
+  color: var(--meteo-muted, #62717f);
+}
+
+/* A timestamp is context, not a reading — it speaks in the muted voice. */
+.meteo-updated {
+  color: var(--meteo-muted, #62717f);
+}
+
+/* Chip chrome mirrors the freshness badge: the band colour is the text and
+ * the background is tinted from it, so themed bands stay paired. The em-dash
+ * and calm chips (no data-band) keep the muted fallback; bands beyond 4 do
+ * too — the default ramp defines five colours, a consumer with more bands
+ * themes its own via [data-band] selectors. */
+.meteo-band-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: var(--meteo-muted, #62717f);
+}
+
+.meteo-band-chip[data-band="0"] { color: var(--wind-band-0, #56a2cc); }
+.meteo-band-chip[data-band="1"] { color: var(--wind-band-1, #2e9e63); }
+.meteo-band-chip[data-band="2"] { color: var(--wind-band-2, #d9a013); }
+.meteo-band-chip[data-band="3"] { color: var(--wind-band-3, #e2662c); }
+.meteo-band-chip[data-band="4"] { color: var(--wind-band-4, #c22727); }
+
 /* ---------- current conditions: the instrument ---------- */
 
 .wind-current {
@@ -468,6 +519,70 @@
   /* A vertical swipe over the chart must stay a scroll. */
   touch-action: pan-y;
 }
+
+/* ---------- sparkline ---------- */
+
+/* The history chart at word size. Inline content (a table cell, a
+ * sentence), so it carries display/vertical-align; the trace is a 1.5px
+ * whisper where the big chart's mean is a 3.5px voice, so it cannot reuse
+ * .wind-mean / .wind-mean-segment. Colours all ride the existing tokens. */
+
+.meteo-sparkline {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* The em-dash placeholder holds the exact box the glyph would, so a station
+ * going quiet never twitches the row's layout. */
+.meteo-sparkline-na {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
+  font-size: 0.85rem;
+  color: var(--meteo-muted, #62717f);
+}
+
+/* The lull–gust band behind the trace, in the big chart's fill. */
+.meteo-sparkline-band {
+  fill: var(--wind-band-fill, rgba(15, 116, 144, 0.22));
+  stroke: none;
+}
+
+/* The average trace: the mean line's colour at sparkline weight. */
+.meteo-sparkline-line {
+  fill: none;
+  stroke: var(--wind-mean, #0f7490);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* A one-sample run between gaps: still a measurement, drawn as a dot. */
+.meteo-sparkline-dot {
+  fill: var(--wind-mean, #0f7490);
+}
+
+.meteo-sparkline-dot.wind-band-0 { fill: var(--wind-band-0, #56a2cc); }
+.meteo-sparkline-dot.wind-band-1 { fill: var(--wind-band-1, #2e9e63); }
+.meteo-sparkline-dot.wind-band-2 { fill: var(--wind-band-2, #d9a013); }
+.meteo-sparkline-dot.wind-band-3 { fill: var(--wind-band-3, #e2662c); }
+.meteo-sparkline-dot.wind-band-4 { fill: var(--wind-band-4, #c22727); }
+
+/* Per-segment grading when thresholds are given — the wind-band-N pattern
+ * at sparkline weight. */
+.meteo-sparkline-segment {
+  fill: none;
+  stroke: var(--wind-mean, #0f7490);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.meteo-sparkline-segment.wind-band-0 { stroke: var(--wind-band-0, #56a2cc); }
+.meteo-sparkline-segment.wind-band-1 { stroke: var(--wind-band-1, #2e9e63); }
+.meteo-sparkline-segment.wind-band-2 { stroke: var(--wind-band-2, #d9a013); }
+.meteo-sparkline-segment.wind-band-3 { stroke: var(--wind-band-3, #e2662c); }
+.meteo-sparkline-segment.wind-band-4 { stroke: var(--wind-band-4, #c22727); }
 
 /* ---------- trend chart ---------- */
 
@@ -882,6 +997,98 @@
   font-size: 0.76rem;
   font-style: italic;
   color: var(--meteo-muted, #62717f);
+}
+
+/* ---------- station strip ---------- */
+
+/* One station, one line. Geometry is fixed per station: absent values print
+ * the em dash in place and only a capability the station lacks omits a cell
+ * — a strip stands alone, with no fleet column grid to hold. min-height
+ * keeps the unavailable arm the same height as a reading. */
+.meteo-strip {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  min-height: 2.6rem;
+  padding: 0.4rem 0.9rem;
+  font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
+  font-size: 0.88rem;
+  color: var(--meteo-ink, #17232e);
+  background: var(--meteo-surface, #ffffff);
+  border: 1px solid var(--meteo-border, #dbe2e9);
+  border-radius: var(--meteo-radius, 12px);
+  box-shadow: var(--meteo-shadow, 0 1px 2px rgb(23 35 46 / 0.06), 0 8px 24px rgb(23 35 46 / 0.05));
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* The name is the one cell allowed to give ground: it ellipsizes so the
+ * reading cells never wrap the line. */
+.meteo-strip-station {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+
+.meteo-strip-station a {
+  color: var(--meteo-accent, #0f7490);
+  text-decoration: none;
+}
+
+.meteo-strip-station a:hover {
+  text-decoration: underline;
+}
+
+.meteo-strip-wind {
+  white-space: nowrap;
+}
+
+.meteo-strip-wind strong {
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+.meteo-strip-wind small {
+  margin-left: 0.3em;
+  font-size: 0.7rem;
+  color: var(--meteo-muted, #62717f);
+}
+
+/* Lull and gust wear the shared micro-label voice: on a headerless line the
+ * bare numbers would be ambiguous. */
+.meteo-strip-lull,
+.meteo-strip-gust {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.meteo-strip-from,
+.meteo-strip-temp {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.meteo-strip-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--meteo-muted, #62717f);
+  white-space: nowrap;
+}
+
+/* Reason words stand in for the reading cells; the held min-height keeps an
+ * outage the same size as a reading. */
+.meteo-strip-reason {
+  color: var(--meteo-muted, #62717f);
+  font-style: italic;
 }
 
 } /* @layer meteo */
