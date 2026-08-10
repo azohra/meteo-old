@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  // Shipped sourcemaps embed their sources: the files whitelist excludes
+  // station/*.ts, and a map pointing at absent files makes consumer
+  // bundlers warn on every module.
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "inlineSources": true
+  },
+  // core/ compiles into dist/core so station/*'s relative re-exports of it
+  // resolve from the published dist tree (core has no exports-map entry).
+  "include": ["core", "station"],
+  "exclude": ["station/test"]
+}

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="232" viewBox="0 0 280 232" role="img" aria-label="CurrentConditions at Launch Ridge"><style>
+text{font-family:ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;font-size:10.5px;fill:#62717f}
+.wind-dial-face{fill:#f4f6f9}
+.wind-dial-bezel-in{stop-color:#f4f6f9;stop-opacity:0}
+.wind-dial-bezel-out{stop-color:#17232e;stop-opacity:0.1}
+.wind-dial-ring{fill:none;stroke:#dbe2e9;stroke-width:1.5}
+.wind-dial-arc{fill:none;stroke:#0f7490;stroke-width:5.5;stroke-linecap:round}
+.wind-dial-arc.wind-band-0{stroke:#56a2cc}
+.wind-dial-arc.wind-band-1{stroke:#2e9e63}
+.wind-dial-arc.wind-band-2{stroke:#d9a013}
+.wind-dial-arc.wind-band-3{stroke:#e2662c}
+.wind-dial-arc.wind-band-4{stroke:#c22727}
+.wind-dial-tick{stroke:#62717f;stroke-width:1;opacity:0.55}
+.wind-dial-tick-cardinal{stroke:#17232e;stroke-width:2;opacity:0.9}
+.wind-dial-letter{font-size:11px;font-weight:600;fill:#62717f}
+.wind-needle-blade{fill:#0f7490}
+.wind-needle-counterweight{fill:#0f7490}
+.wind-dial-hub{fill:#f4f6f9;stroke:#dbe2e9;stroke-width:1.5}
+.wind-dial-speed{font-size:37px;font-weight:750;fill:#17232e}
+.wind-dial-unit{font-size:10px;fill:#62717f}
+.wind-grid-line{stroke:#e5eaef;stroke-width:1}
+.wind-zone{stroke:none;fill-opacity:0.05}
+.wind-zone.wind-band-0{fill:#56a2cc}
+.wind-zone.wind-band-1{fill:#2e9e63}
+.wind-zone.wind-band-2{fill:#d9a013}
+.wind-zone.wind-band-3{fill:#e2662c}
+.wind-zone.wind-band-4{fill:#c22727}
+.wind-threshold{stroke-width:1;stroke-dasharray:2 5;opacity:0.7}
+.wind-threshold.wind-band-0{stroke:#56a2cc}
+.wind-threshold.wind-band-1{stroke:#2e9e63}
+.wind-threshold.wind-band-2{stroke:#d9a013}
+.wind-threshold.wind-band-3{stroke:#e2662c}
+.wind-threshold.wind-band-4{stroke:#c22727}
+.wind-threshold-label{font-size:9px;font-weight:650}
+.wind-threshold-label.wind-band-0{fill:#56a2cc}
+.wind-threshold-label.wind-band-1{fill:#2e9e63}
+.wind-threshold-label.wind-band-2{fill:#d9a013}
+.wind-threshold-label.wind-band-3{fill:#e2662c}
+.wind-threshold-label.wind-band-4{fill:#c22727}
+.wind-guide{stroke:#e5eaef;stroke-width:1;stroke-dasharray:1 4}
+.wind-band{fill:rgba(15, 116, 144, 0.22);stroke:none}
+.wind-mean-segment{fill:none;stroke-width:3.5;stroke-linecap:round}
+.wind-mean-segment.wind-band-0{stroke:#56a2cc}
+.wind-mean-segment.wind-band-1{stroke:#2e9e63}
+.wind-mean-segment.wind-band-2{stroke:#d9a013}
+.wind-mean-segment.wind-band-3{stroke:#e2662c}
+.wind-mean-segment.wind-band-4{stroke:#c22727}
+.wind-row-label{font-size:9px;letter-spacing:0.08em}
+.wind-vane{fill:none;stroke:#3b4a58;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wind-gap-hatch{stroke:rgba(98, 113, 127, 0.5);stroke-width:1.25}
+.wind-rose-grid{fill:none;stroke:#e5eaef;stroke-width:1}
+.wind-rose-tick{stroke:#62717f;stroke-width:1;opacity:0.35}
+.wind-rose-letter{font-size:12.5px;font-weight:650;fill:#17232e}
+.wind-rose-ring-label{font-size:8.5px;fill:#62717f}
+.wind-rose-petal{fill:#0f7490;fill-opacity:0.85;stroke:#0b5468;stroke-width:1;stroke-linejoin:round}
+.wind-rose-petal.wind-band-0{fill:#56a2cc;stroke:#3e7593}
+.wind-rose-petal.wind-band-1{fill:#2e9e63;stroke:#217247}
+.wind-rose-petal.wind-band-2{fill:#d9a013;stroke:#9c730e}
+.wind-rose-petal.wind-band-3{fill:#e2662c;stroke:#a34920}
+.wind-rose-petal.wind-band-4{fill:#c22727;stroke:#8c1c1c}
+.wind-rose-hub{fill:#ffffff;stroke:#dbe2e9;stroke-width:1}
+.wind-rose-dot{fill:#62717f}
+.hw-card{fill:#ffffff;stroke:#dbe2e9;stroke-width:1}
+.hw-raised{fill:#f4f6f9}
+.hw-border{stroke:#dbe2e9;stroke-width:1}
+.hw-name{font-size:20px;font-weight:700;fill:#17232e;letter-spacing:-0.2px}
+.hw-meta{font-size:12px;fill:#62717f}
+.hw-micro{font-size:10px;font-weight:600;letter-spacing:0.08em;fill:#62717f}
+.hw-big{font-size:22px;font-weight:700;fill:#17232e}
+.hw-strong{font-size:14px;font-weight:650;fill:#17232e}
+.hw-dim{font-size:13px;fill:#62717f}
+.hw-accent-strong{font-size:12px;font-weight:700;fill:#0f7490}
+.hw-italic{font-size:12px;font-style:italic;fill:#62717f}
+.hw-pill{fill:#12813d;fill-opacity:0.13}
+.hw-pill-dot{fill:#12813d}
+.hw-pill-text{font-size:12px;font-weight:600;fill:#12813d}
+.hw-vane-accent{fill:none;stroke:#0f7490;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hw-table-strong{font-size:13px;font-weight:650;fill:#17232e}
+.hw-table-num{font-size:14px;font-weight:700;fill:#17232e}
+.hw-wordmark{font-size:44px;font-weight:600;letter-spacing:-1.2px;fill:#17232e}
+.hw-wordmark-sub{font-size:12px;font-weight:650;letter-spacing:0.34em;fill:#62717f}
+</style><rect class="hw-card" x="6.5" y="6.5" width="267" height="219" rx="12"/><text class="hw-micro" x="32" y="88" text-anchor="middle">LULL</text><text class="hw-big" x="32" y="114" text-anchor="middle">11</text><svg x="60" y="18" aria-label="Launch Ridge: 17 km/h" class="wind-dial" height="160" role="img" viewBox="0 0 160 160" width="160"><defs><radialGradient cx="50%" cy="42%" id="wind-bezel-_R_0_" r="68%"><stop class="wind-dial-bezel-in" offset="55%"></stop><stop class="wind-dial-bezel-out" offset="100%"></stop></radialGradient></defs><circle class="wind-dial-face" cx="80" cy="80" r="70"></circle><circle class="wind-dial-bezel" cx="80" cy="80" fill="url(#wind-bezel-_R_0_)" r="70"></circle><circle class="wind-dial-ring" cx="80" cy="80" r="70"></circle><path class="wind-dial-arc wind-band-1" d="M 80.0 10.0 A 70 70 0 0 1 108.6 143.9"></path><line class="wind-dial-tick wind-dial-tick-cardinal" x1="80" x2="80" y1="10" y2="22"></line><line class="wind-dial-tick" x1="106.78784026555628" x2="104.49173967136575" y1="15.328432724209932" y2="20.87170991927765"></line><line class="wind-dial-tick" x1="129.49747468305833" x2="125.25483399593904" y1="30.50252531694167" y2="34.745166004060955"></line><line class="wind-dial-tick" x1="144.67156727579007" x2="139.12829008072237" y1="53.212159734443716" y2="55.50826032863425"></line><line class="wind-dial-tick wind-dial-tick-cardinal" x1="150" x2="138" y1="80" y2="80"></line><line class="wind-dial-tick" x1="144.67156727579007" x2="139.12829008072237" y1="106.78784026555628" y2="104.49173967136574"></line><line class="wind-dial-tick" x1="129.49747468305833" x2="125.25483399593904" y1="129.49747468305833" y2="125.25483399593904"></line><line class="wind-dial-tick" x1="106.7878402655563" x2="104.49173967136575" y1="144.67156727579007" y2="139.12829008072237"></line><line class="wind-dial-tick wind-dial-tick-cardinal" x1="80.00000000000001" x2="80" y1="150" y2="138"></line><line class="wind-dial-tick" x1="53.21215973444376" x2="55.50826032863429" y1="144.6715672757901" y2="139.12829008072237"></line><line class="wind-dial-tick" x1="30.50252531694168" x2="34.74516600406096" y1="129.49747468305833" y2="125.25483399593905"></line><line class="wind-dial-tick" x1="15.328432724209918" x2="20.87170991927764" y1="106.78784026555627" y2="104.49173967136574"></line><line class="wind-dial-tick wind-dial-tick-cardinal" x1="10" x2="22" y1="80.00000000000001" y2="80.00000000000001"></line><line class="wind-dial-tick" x1="15.328432724209932" x2="20.871709919277656" y1="53.2121597344437" y2="55.508260328634236"></line><line class="wind-dial-tick" x1="30.502525316941664" x2="34.74516600406095" y1="30.502525316941686" y2="34.74516600406097"></line><line class="wind-dial-tick" x1="53.21215973444373" x2="55.508260328634265" y1="15.328432724209918" y2="20.87170991927764"></line><text class="wind-dial-letter" text-anchor="middle" x="80" y="37.5">N</text><text class="wind-dial-letter" text-anchor="middle" x="126" y="83.5">E</text><text class="wind-dial-letter" text-anchor="middle" x="80" y="129.5">S</text><text class="wind-dial-letter" text-anchor="middle" x="34" y="83.50000000000001">W</text><g class="wind-needle"><polygon class="wind-needle-blade" points="123.9,120.9 76.6,83.7 83.4,76.3"></polygon><circle class="wind-needle-counterweight" cx="46.35772972551813" cy="48.62807543712509" r="4.5"></circle></g><circle class="wind-dial-hub" cx="80" cy="80" r="36"></circle><text class="wind-dial-speed" text-anchor="middle" x="80" y="88">17</text><text class="wind-dial-unit" text-anchor="middle" x="80" y="106">km/h</text></svg><text class="hw-micro" x="248" y="88" text-anchor="middle">GUST</text><text class="hw-big" x="248" y="114" text-anchor="middle">24</text><text class="hw-dim" x="117" y="206" text-anchor="end">from</text><path class="hw-vane-accent" d="M 126.2 196.6 L 135.8 205.4 M 131.5 205.6 L 135.8 205.4 L 135.6 201.2"/><text x="145" y="206"><tspan class="hw-strong">NW</tspan><tspan class="hw-dim"> 313°</tspan></text></svg>

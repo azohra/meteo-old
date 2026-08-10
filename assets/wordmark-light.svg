@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="92" viewBox="0 0 430 92" role="img" aria-label="azohra meteo"><style>
+text{font-family:ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;font-size:10.5px;fill:#62717f}
+.wind-dial-face{fill:#f4f6f9}
+.wind-dial-bezel-in{stop-color:#f4f6f9;stop-opacity:0}
+.wind-dial-bezel-out{stop-color:#17232e;stop-opacity:0.1}
+.wind-dial-ring{fill:none;stroke:#dbe2e9;stroke-width:1.5}
+.wind-dial-arc{fill:none;stroke:#0f7490;stroke-width:5.5;stroke-linecap:round}
+.wind-dial-arc.wind-band-0{stroke:#56a2cc}
+.wind-dial-arc.wind-band-1{stroke:#2e9e63}
+.wind-dial-arc.wind-band-2{stroke:#d9a013}
+.wind-dial-arc.wind-band-3{stroke:#e2662c}
+.wind-dial-arc.wind-band-4{stroke:#c22727}
+.wind-dial-tick{stroke:#62717f;stroke-width:1;opacity:0.55}
+.wind-dial-tick-cardinal{stroke:#17232e;stroke-width:2;opacity:0.9}
+.wind-dial-letter{font-size:11px;font-weight:600;fill:#62717f}
+.wind-needle-blade{fill:#0f7490}
+.wind-needle-counterweight{fill:#0f7490}
+.wind-dial-hub{fill:#f4f6f9;stroke:#dbe2e9;stroke-width:1.5}
+.wind-dial-speed{font-size:37px;font-weight:750;fill:#17232e}
+.wind-dial-unit{font-size:10px;fill:#62717f}
+.wind-grid-line{stroke:#e5eaef;stroke-width:1}
+.wind-zone{stroke:none;fill-opacity:0.05}
+.wind-zone.wind-band-0{fill:#56a2cc}
+.wind-zone.wind-band-1{fill:#2e9e63}
+.wind-zone.wind-band-2{fill:#d9a013}
+.wind-zone.wind-band-3{fill:#e2662c}
+.wind-zone.wind-band-4{fill:#c22727}
+.wind-threshold{stroke-width:1;stroke-dasharray:2 5;opacity:0.7}
+.wind-threshold.wind-band-0{stroke:#56a2cc}
+.wind-threshold.wind-band-1{stroke:#2e9e63}
+.wind-threshold.wind-band-2{stroke:#d9a013}
+.wind-threshold.wind-band-3{stroke:#e2662c}
+.wind-threshold.wind-band-4{stroke:#c22727}
+.wind-threshold-label{font-size:9px;font-weight:650}
+.wind-threshold-label.wind-band-0{fill:#56a2cc}
+.wind-threshold-label.wind-band-1{fill:#2e9e63}
+.wind-threshold-label.wind-band-2{fill:#d9a013}
+.wind-threshold-label.wind-band-3{fill:#e2662c}
+.wind-threshold-label.wind-band-4{fill:#c22727}
+.wind-guide{stroke:#e5eaef;stroke-width:1;stroke-dasharray:1 4}
+.wind-band{fill:rgba(15, 116, 144, 0.22);stroke:none}
+.wind-mean-segment{fill:none;stroke-width:3.5;stroke-linecap:round}
+.wind-mean-segment.wind-band-0{stroke:#56a2cc}
+.wind-mean-segment.wind-band-1{stroke:#2e9e63}
+.wind-mean-segment.wind-band-2{stroke:#d9a013}
+.wind-mean-segment.wind-band-3{stroke:#e2662c}
+.wind-mean-segment.wind-band-4{stroke:#c22727}
+.wind-row-label{font-size:9px;letter-spacing:0.08em}
+.wind-vane{fill:none;stroke:#3b4a58;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wind-gap-hatch{stroke:rgba(98, 113, 127, 0.5);stroke-width:1.25}
+.wind-rose-grid{fill:none;stroke:#e5eaef;stroke-width:1}
+.wind-rose-tick{stroke:#62717f;stroke-width:1;opacity:0.35}
+.wind-rose-letter{font-size:12.5px;font-weight:650;fill:#17232e}
+.wind-rose-ring-label{font-size:8.5px;fill:#62717f}
+.wind-rose-petal{fill:#0f7490;fill-opacity:0.85;stroke:#0b5468;stroke-width:1;stroke-linejoin:round}
+.wind-rose-petal.wind-band-0{fill:#56a2cc;stroke:#3e7593}
+.wind-rose-petal.wind-band-1{fill:#2e9e63;stroke:#217247}
+.wind-rose-petal.wind-band-2{fill:#d9a013;stroke:#9c730e}
+.wind-rose-petal.wind-band-3{fill:#e2662c;stroke:#a34920}
+.wind-rose-petal.wind-band-4{fill:#c22727;stroke:#8c1c1c}
+.wind-rose-hub{fill:#ffffff;stroke:#dbe2e9;stroke-width:1}
+.wind-rose-dot{fill:#62717f}
+.hw-card{fill:#ffffff;stroke:#dbe2e9;stroke-width:1}
+.hw-raised{fill:#f4f6f9}
+.hw-border{stroke:#dbe2e9;stroke-width:1}
+.hw-name{font-size:20px;font-weight:700;fill:#17232e;letter-spacing:-0.2px}
+.hw-meta{font-size:12px;fill:#62717f}
+.hw-micro{font-size:10px;font-weight:600;letter-spacing:0.08em;fill:#62717f}
+.hw-big{font-size:22px;font-weight:700;fill:#17232e}
+.hw-strong{font-size:14px;font-weight:650;fill:#17232e}
+.hw-dim{font-size:13px;fill:#62717f}
+.hw-accent-strong{font-size:12px;font-weight:700;fill:#0f7490}
+.hw-italic{font-size:12px;font-style:italic;fill:#62717f}
+.hw-pill{fill:#12813d;fill-opacity:0.13}
+.hw-pill-dot{fill:#12813d}
+.hw-pill-text{font-size:12px;font-weight:600;fill:#12813d}
+.hw-vane-accent{fill:none;stroke:#0f7490;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hw-table-strong{font-size:13px;font-weight:650;fill:#17232e}
+.hw-table-num{font-size:14px;font-weight:700;fill:#17232e}
+.hw-wordmark{font-size:44px;font-weight:600;letter-spacing:-1.2px;fill:#17232e}
+.hw-wordmark-sub{font-size:12px;font-weight:650;letter-spacing:0.34em;fill:#62717f}
+</style><path d="M 19.7 56.3 L 52.3 23.7" fill="none" stroke="#0f7490" stroke-width="6.5" stroke-linecap="round"/><path d="M 52.3 38.6 L 52.3 23.7 L 37.4 23.7" fill="none" stroke="#d9a013" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/><text class="hw-wordmark" x="74" y="58">azohra meteo</text></svg>

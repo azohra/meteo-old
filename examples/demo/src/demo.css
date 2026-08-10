@@ -1,0 +1,261 @@
+/* Page chrome only — everything meteo- and wind-prefixed is the library's
+ * skin. The chrome speaks the library's own vocabulary: every colour below
+ * is a --meteo-* token or a light-dark() pair, so the header, nav, and
+ * panels follow the same color-scheme the meteo-root resolves — including
+ * the data-theme pin the theme switch sets. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.demo-page {
+  min-height: 100dvh;
+  background: light-dark(#eef1f5, #0d1319);
+  color: var(--meteo-ink, #17232e);
+  font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
+}
+
+/* ---- Sticky header: wordmark, global controls, section nav ---- */
+
+.demo-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--meteo-border, #dbe2e9);
+  background: light-dark(rgba(238, 241, 245, 0.88), rgba(13, 19, 25, 0.88));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.demo-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0.7rem 1.5rem 0.55rem;
+}
+
+.demo-wordmark {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.demo-wordmark-sub {
+  font-weight: 400;
+  color: var(--meteo-muted, #62717f);
+}
+
+.demo-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Segmented controls: the pressed segment wears the accent. */
+.demo-segmented {
+  display: inline-flex;
+  border: 1px solid var(--meteo-border, #dbe2e9);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--meteo-surface, #ffffff);
+}
+
+.demo-segmented button {
+  padding: 0.38rem 0.7rem;
+  border: none;
+  background: transparent;
+  color: var(--meteo-muted, #62717f);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.demo-segmented button + button {
+  border-left: 1px solid var(--meteo-border, #dbe2e9);
+}
+
+.demo-segmented button[aria-pressed="true"] {
+  background: var(--meteo-accent, #0f7490);
+  color: light-dark(#ffffff, #0d1319);
+}
+
+.demo-live-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.8rem;
+  border: 1px solid var(--meteo-border, #dbe2e9);
+  border-radius: 999px;
+  background: var(--meteo-surface, #ffffff);
+  color: var(--meteo-muted, #62717f);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.demo-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--meteo-muted, #62717f);
+  opacity: 0.45;
+}
+
+.demo-live-toggle[data-live="true"] {
+  border-color: var(--meteo-freshness-live, #12813d);
+  color: var(--meteo-freshness-live, #12813d);
+}
+
+.demo-live-toggle[data-live="true"] .demo-live-dot {
+  background: var(--meteo-freshness-live, #12813d);
+  opacity: 1;
+  animation: demo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes demo-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Anchor nav: one quiet row under the header bar. */
+.demo-nav {
+  display: flex;
+  gap: 1.1rem;
+  overflow-x: auto;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 1.5rem 0.6rem;
+}
+
+.demo-nav a {
+  color: var(--meteo-muted, #62717f);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.demo-nav a:hover {
+  color: var(--meteo-accent, #0f7490);
+}
+
+/* ---- Section rhythm: title, one line, panel ---- */
+
+.demo-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 0;
+}
+
+.demo-section {
+  margin-top: 3.5rem;
+  scroll-margin-top: 6.5rem; /* clear the sticky header on anchor jumps */
+}
+
+.demo-section:first-child {
+  margin-top: 2rem;
+}
+
+.demo-section-head {
+  margin-bottom: 1.1rem;
+}
+
+.demo-section-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+
+.demo-section-head p {
+  margin: 0.35rem 0 0;
+  max-width: 68ch;
+  color: var(--meteo-muted, #62717f);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.demo-grid {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.demo-grid-instruments {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.demo-grid-charts {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+/* Two station cards abreast when the page is wide enough. */
+.demo-grid-cards {
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  align-items: start;
+}
+
+.demo-grid-roses {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.demo-panel {
+  padding: 1rem 1.1rem;
+  background: var(--meteo-surface, #ffffff);
+  border: 1px solid var(--meteo-border, #dbe2e9);
+  border-radius: var(--meteo-radius, 12px);
+}
+
+.demo-panel h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--meteo-muted, #62717f);
+}
+
+/* ---- Footer ---- */
+
+.demo-footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  max-width: 1080px;
+  margin: 4rem auto 0;
+  padding: 1.4rem 1.5rem 2.5rem;
+  border-top: 1px solid var(--meteo-border, #dbe2e9);
+}
+
+.demo-footer p {
+  margin: 0;
+  color: var(--meteo-muted, #62717f);
+  font-size: 0.8rem;
+}
+
+.demo-footer a {
+  color: var(--meteo-accent, #0f7490);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.demo-footer a:hover {
+  text-decoration: underline;
+}
