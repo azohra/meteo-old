@@ -1,14 +1,14 @@
 "use client";
-/* The per-station one-liner: the reading a StationCompare row states,
+/* The per-station one-liner: the reading a StationTable row states,
  * standalone — for overview boards, page headers, and anywhere one station
- * earns one line. Formatting rides the same cell helpers the compare table
+ * earns one line. Formatting rides the same cell helpers the station table
  * uses, so a strip and a table row can never disagree about a dash, a calm
  * word, or a rounded speed.
  *
  * Fixed geometry per station: an absent VALUE is an em dash in place, never
  * an absent cell, because readings are replaced on every poll; only a
  * CAPABILITY the station lacks omits its cell — a strip stands alone, with
- * no fleet column grid to hold (that alignment is StationCompare's job). An
+ * no fleet column grid to hold (that alignment is StationTable's job). An
  * unavailable station keeps its line: the name stays, the reason words stand
  * in for the reading cells, and the height holds. */
 import type { SpeedUnit, Station } from "../../index.js";

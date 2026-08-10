@@ -12,7 +12,7 @@ import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import {
   AirMatrix,
-  StationCompare,
+  StationTable,
   StationFeedProvider,
   StationStrip,
   TrendChart,
@@ -37,7 +37,7 @@ describe("server rendering", () => {
           unit="knots"
         />
         <AirMatrix formatTime={isoTime} stations={feed.stations} />
-        <StationCompare
+        <StationTable
           formatTime={isoTime}
           receivedAtMs={BASE_MS + 30_000}
           servedAt={feed.servedAt}
@@ -49,7 +49,7 @@ describe("server rendering", () => {
     expect(html.length).toBeGreaterThan(0);
     expect(html).toContain("Test Station");
     expect(html).toContain("meteo-air-trigger");
-    expect(html).toContain("wind-compare");
+    expect(html).toContain("wind-table");
     /* Like the wind chart, the trend renders its wrapper on the server and
      * defers drawing to the client's first measurement. */
     expect(html).toContain("meteo-trend");
@@ -67,7 +67,7 @@ describe("server rendering", () => {
           unit="knots"
         >
           <WindStation />
-          <StationCompare />
+          <StationTable />
           <StationStrip />
           <AirMatrix />
         </StationFeedProvider>
@@ -105,7 +105,7 @@ describe("server rendering", () => {
      * the exact nondeterminism that mismatches server and client markup. */
     const feed = feedFixture([okStation()]);
     const html = renderToString(
-      <StationCompare
+      <StationTable
         formatTime={isoTime}
         receivedAtMs={BASE_MS + 30_000}
         servedAt={feed.servedAt}

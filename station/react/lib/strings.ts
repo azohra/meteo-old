@@ -53,7 +53,7 @@ export type StationStrings = {
   freshness: Record<FreshnessStatus, string>;
   reasons: Record<UnavailableReason, string>;
   /* Display labels per speed unit — what the dial hub, chart readout, and
-   * compare cells print beside a number. */
+   * table cells print beside a number. */
   speedUnits: Record<SpeedUnit, string>;
   table: {
     station: string;
@@ -104,7 +104,7 @@ export type StationStrings = {
   aria: {
     air: (stationCount: number) => string;
     chart: (stationName: string) => string;
-    compare: (stationCount: number) => string;
+    table: (stationCount: number) => string;
     current: (stationName: string) => string;
     /* The Direction atom's sentence; `spoken` is the compassSpoken word. */
     direction: (spoken: string, deg: number) => string;
@@ -234,7 +234,7 @@ export const defaultStrings: StationStrings = {
     air: (stationCount) => `Air and precipitation readings from ${stationCount} stations`,
     chart: (stationName) =>
       `Wind history at ${stationName}: the band spans lull to gust, the line is the average, and the vanes below point where the wind blew to.`,
-    compare: (stationCount) => `Live readings from ${stationCount} stations`,
+    table: (stationCount) => `Live readings from ${stationCount} stations`,
     current: (stationName) => `Current conditions at ${stationName}`,
     direction: (spoken, deg) => `from ${spoken}, ${deg} degrees`,
     readout: (stationName) => `Inspected reading at ${stationName}`,

@@ -24,7 +24,7 @@ import type { FormatTime, StationStringOverrides, StationStrings } from "../lib/
 import { FreshnessBadge } from "./FreshnessBadge.js";
 import { requireResolved, useStationFeedContext } from "./StationFeedProvider.js";
 
-export function StationCompare({
+export function StationTable({
   stations: stationsProp,
   servedAt: servedAtProp,
   receivedAtMs: receivedAtMsProp,
@@ -52,7 +52,7 @@ export function StationCompare({
 }) {
   const context = useStationFeedContext();
   const stations = requireResolved(
-    "StationCompare",
+    "StationTable",
     "stations",
     stationsProp ?? context?.feed?.stations,
   );
@@ -65,11 +65,11 @@ export function StationCompare({
   const words = resolveStrings(strings);
   return (
     <div
-      aria-label={words.aria.compare(stations.length)}
-      className="wind-compare"
+      aria-label={words.aria.table(stations.length)}
+      className="wind-table"
       role="table"
     >
-      <div className="wind-compare-row wind-compare-head wind-microlabel" role="row">
+      <div className="wind-table-row wind-table-head wind-microlabel" role="row">
         <span role="columnheader">{words.table.station}</span>
         <span role="columnheader">{words.table.wind}</span>
         <span role="columnheader">{words.table.lull}</span>
@@ -78,9 +78,9 @@ export function StationCompare({
         <span role="columnheader">{words.table.temp}</span>
         <span role="columnheader">{words.table.updated}</span>
       </div>
-      <div className="wind-compare-body" role="rowgroup">
+      <div className="wind-table-body" role="rowgroup">
         {stations.map((station) => (
-          <CompareRow
+          <TableRow
             formatTime={formatTime}
             key={station.id}
             receivedAtMs={receivedAtMs}
@@ -97,7 +97,7 @@ export function StationCompare({
   );
 }
 
-function CompareRow({
+function TableRow({
   formatTime,
   receivedAtMs,
   servedAt,
@@ -123,8 +123,8 @@ function CompareRow({
     stationFreshnessThresholds(station),
   );
   return (
-    <div className="wind-compare-row" data-status={station.status} role="row">
-      <span className="wind-compare-station" role="cell">
+    <div className="wind-table-row" data-status={station.status} role="row">
+      <span className="wind-table-station" role="cell">
         <strong>
           <StationNameLink station={station} />
         </strong>
@@ -132,35 +132,35 @@ function CompareRow({
       </span>
       {station.status === "ok" ? (
         <>
-          <span className="wind-compare-wind" role="cell">
+          <span className="wind-table-wind" role="cell">
             <strong>{roundSpeed(station.reading.averageMps, unit)}</strong>
             <small>{words.speedUnits[unit]}</small>
           </span>
-          <span className="wind-compare-lull" role="cell">
+          <span className="wind-table-lull" role="cell">
             {optionalSpeed(station.reading.lullMps, unit)}
           </span>
-          <span className="wind-compare-gust" role="cell">
+          <span className="wind-table-gust" role="cell">
             {optionalSpeed(station.reading.gustMps, unit)}
           </span>
-          <span className="wind-compare-from" role="cell">
+          <span className="wind-table-from" role="cell">
             <DirectionCell
               averageMps={station.reading.averageMps}
               directionDeg={station.reading.directionDeg}
               words={words}
             />
           </span>
-          <span className="wind-compare-temp" role="cell">
+          <span className="wind-table-temp" role="cell">
             {temperatureText(station.reading.temperatureC, words)}
           </span>
-          <span className="wind-compare-updated" role="cell">
-            <span className="wind-compare-time">
+          <span className="wind-table-updated" role="cell">
+            <span className="wind-table-time">
               {formatTime(new Date(station.reading.observedAt))}
             </span>
             {status != null && <FreshnessBadge status={status} strings={strings} />}
           </span>
         </>
       ) : (
-        <span className="wind-compare-reason" role="cell">
+        <span className="wind-table-reason" role="cell">
           {words.reasons[station.reason]}
         </span>
       )}

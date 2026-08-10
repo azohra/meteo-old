@@ -1,5 +1,5 @@
 "use client";
-/* Reading-cell formatting shared by the compare table, the station strip,
+/* Reading-cell formatting shared by the station table, the station strip,
  * and the text atoms: one place decides how a fragment of a reading prints —
  * the rounded speed, the em dash for an absent value, the calm word versus
  * the dead-vane dash, the linked station name — so a strip, a table row, and

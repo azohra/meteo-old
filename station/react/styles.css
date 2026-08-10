@@ -76,7 +76,7 @@
 .wind-current,
 .wind-chart,
 .meteo-trend,
-.wind-compare,
+.wind-table,
 .wind-rose,
 .wind-rose-na {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
@@ -709,9 +709,9 @@
   font-feature-settings: "tnum";
 }
 
-/* ---------- compare table ---------- */
+/* ---------- station table ---------- */
 
-.wind-compare {
+.wind-table {
   background: var(--meteo-surface, #ffffff);
   border: 1px solid var(--meteo-border, #dbe2e9);
   border-radius: var(--meteo-radius, 12px);
@@ -720,7 +720,7 @@
   box-shadow: var(--meteo-shadow, 0 1px 2px rgb(23 35 46 / 0.06), 0 8px 24px rgb(23 35 46 / 0.05));
 }
 
-.wind-compare-row {
+.wind-table-row {
   display: grid;
   grid-template-columns: minmax(140px, 1.7fr) 0.9fr 0.7fr 0.7fr 1.2fr 1fr 1.2fr;
   gap: 0.5rem;
@@ -728,63 +728,63 @@
   padding: 0.55rem 0.9rem;
 }
 
-.wind-compare-head {
+.wind-table-head {
   background: var(--meteo-surface-raised, #f4f6f9);
   border-bottom: 1px solid var(--meteo-border, #dbe2e9);
 }
 
-.wind-compare-body .wind-compare-row + .wind-compare-row {
+.wind-table-body .wind-table-row + .wind-table-row {
   border-top: 1px solid var(--meteo-grid, #e5eaef);
 }
 
-.wind-compare-station {
+.wind-table-station {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
   min-width: 0;
 }
 
-.wind-compare-station strong {
+.wind-table-station strong {
   font-weight: 650;
 }
 
-.wind-compare-station a {
+.wind-table-station a {
   color: var(--meteo-accent, #0f7490);
   text-decoration: none;
 }
 
-.wind-compare-station a:hover {
+.wind-table-station a:hover {
   text-decoration: underline;
 }
 
-.wind-compare-station small {
+.wind-table-station small {
   font-size: 0.72rem;
   color: var(--meteo-muted, #62717f);
 }
 
-.wind-compare-wind strong {
+.wind-table-wind strong {
   font-size: 1.4rem;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-.wind-compare-wind small {
+.wind-table-wind small {
   margin-left: 0.3em;
   font-size: 0.7rem;
   color: var(--meteo-muted, #62717f);
 }
 
-.wind-compare-lull,
-.wind-compare-gust,
-.wind-compare-from,
-.wind-compare-temp {
+.wind-table-lull,
+.wind-table-gust,
+.wind-table-from,
+.wind-table-temp {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   font-weight: 600;
 }
 
-.wind-compare-updated {
+.wind-table-updated {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -794,23 +794,23 @@
 }
 
 /* Reason words span every data column so the row keeps its geometry. */
-.wind-compare-reason {
+.wind-table-reason {
   grid-column: 2 / -1;
   color: var(--meteo-muted, #62717f);
   font-style: italic;
 }
 
 @media (max-width: 560px) {
-  .wind-compare-row {
+  .wind-table-row {
     grid-template-columns: minmax(110px, 1.4fr) 0.9fr 0.7fr 0.7fr 1.1fr;
   }
-  .wind-compare-temp,
-  .wind-compare-updated,
-  .wind-compare-head span:nth-child(6),
-  .wind-compare-head span:nth-child(7) {
+  .wind-table-temp,
+  .wind-table-updated,
+  .wind-table-head span:nth-child(6),
+  .wind-table-head span:nth-child(7) {
     display: none;
   }
-  .wind-compare-reason {
+  .wind-table-reason {
     display: block;
   }
 }

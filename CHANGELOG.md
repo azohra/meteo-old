@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — 2026-08-10
+
+- **Breaking: `StationCompare` is now `StationTable`.** The component was
+  never a comparison — it is a readings table, one row per station under
+  named column headers, and the head row is what makes even a single
+  station's bare numbers readable. The name follows the structure. Renames:
+  the `StationCompare` export → `StationTable`, the `wind-compare-*` class
+  hooks → `wind-table-*`, and the `aria.compare` string → `aria.table`.
+
 ## 0.1.2 — 2026-08-10
 
 - **`StationCompare` `stationMeta`**: the sub-label under each station's name

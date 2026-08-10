@@ -147,7 +147,7 @@ describe("Direction", () => {
   });
 
   it("says calm in a word even when the vane reports a parked bearing, and never draws an arrow", () => {
-    /* The library convention (StationCompare, StationStrip, the WMO stance):
+    /* The library convention (StationTable, StationStrip, the WMO stance):
      * calm is a word; the dash is reserved for a dead vane on a blowing
      * reading. No bearing to speak means no aria sentence either. */
     const { container } = render(<Direction station={calmStation()} />);

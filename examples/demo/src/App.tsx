@@ -26,7 +26,7 @@ import {
   Gust,
   Sparkline,
   Speed,
-  StationCompare,
+  StationTable,
   StationFeedProvider,
   StationStrip,
   TrendChart,
@@ -97,16 +97,16 @@ const SECTIONS: { id: string; title: string; nav: string; note: string }[] = [
     note: "AirMatrix folds the whole atmosphere behind a live trigger line; only the conditions-capable station earns a column.",
   },
   {
-    id: "compare",
-    title: "The fleet, compared",
-    nav: "Compare",
+    id: "table",
+    title: "The fleet, on one table",
+    nav: "Table",
     note: "One row per station, unavailable rows keep their geometry — no props at all, the provider supplies everything.",
   },
   {
     id: "strips",
     title: "Strips",
     nav: "Strips",
-    note: "StationStrip is the compare row as a standalone one-liner — provider-fed here, and the outage keeps its line at full height.",
+    note: "StationStrip is the table row as a standalone one-liner — provider-fed here, and the outage keeps its line at full height.",
   },
   {
     id: "primitives",
@@ -285,9 +285,9 @@ export default function App() {
             <AirMatrix />
           </section>
 
-          <section className="demo-section" id="compare">
-            <SectionHead id="compare" />
-            <StationCompare />
+          <section className="demo-section" id="table">
+            <SectionHead id="table" />
+            <StationTable />
           </section>
 
           <section className="demo-section" id="strips">

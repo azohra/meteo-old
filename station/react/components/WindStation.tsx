@@ -168,7 +168,7 @@ export function WindStationHeader({
   );
 }
 
-/* The dial. A page whose compare table already states the current reading
+/* The dial. A page whose station table already states the current reading
  * simply leaves this piece out of its composition. */
 export function WindStationInstrument({
   thresholds,

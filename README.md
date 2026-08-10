@@ -58,13 +58,13 @@ wind rose, multi-station comparison.
     <td width="25%" align="center"><img src="assets/gallery-dial.svg" alt="CurrentConditions: instrument dial with banded speed arc"></td>
     <td width="25%" align="center"><img src="assets/gallery-chart.svg" alt="WindHistoryChart: graded average, lull-gust band, vane row"></td>
     <td width="25%" align="center"><img src="assets/gallery-rose.svg" alt="WindRose: banded petals and calm share"></td>
-    <td width="25%" align="center"><img src="assets/gallery-compare.svg" alt="StationCompare: three stations, one degraded honestly"></td>
+    <td width="25%" align="center"><img src="assets/gallery-table.svg" alt="StationTable: three stations, one degraded honestly"></td>
   </tr>
   <tr>
     <td align="center"><sub><code>CurrentConditions</code></sub></td>
     <td align="center"><sub><code>WindHistoryChart</code></sub></td>
     <td align="center"><sub><code>WindRose</code></sub></td>
-    <td align="center"><sub><code>StationCompare</code></sub></td>
+    <td align="center"><sub><code>StationTable</code></sub></td>
   </tr>
 </table>
 
@@ -100,7 +100,7 @@ export const onRequest = createStationFeedHandler({
 
 ```tsx
 // client: render the fleet
-import { StationFeedProvider, useStation, WindStation, StationCompare } from "@azohra/meteo/station/react";
+import { StationFeedProvider, useStation, WindStation, StationTable } from "@azohra/meteo/station/react";
 import "@azohra/meteo/station/react/styles.css";
 
 function LiveWind() {
@@ -112,7 +112,7 @@ function LiveWind() {
       <StationFeedProvider feed={feed} receivedAtMs={receivedAtMs}
         thresholds={{ unit: "kmh", values: [12, 20, 28] }}> {/* your vocabulary; converted to the m/s wire once */}
         <WindStation />    {/* the named station, fully rendered */}
-        <StationCompare /> {/* the whole fleet */}
+        <StationTable /> {/* the whole fleet */}
       </StationFeedProvider>
     </div>
   );

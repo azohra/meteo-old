@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AirMatrix,
   CurrentConditions,
-  StationCompare,
+  StationTable,
   StationFeedProvider,
   StationStrip,
   WindHistoryChart,
@@ -221,21 +221,21 @@ describe("WindRose", () => {
   });
 });
 
-describe("StationCompare", () => {
+describe("StationTable", () => {
   it("keeps one row per station, dashes nulls, and spells out outages", () => {
     const gustless = okStation({
       reading: { ...okStation().reading, gustMps: null, lullMps: null },
     });
     const feed = feedFixture([gustless, downStation()]);
     const { container } = render(
-      <StationCompare receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} />,
+      <StationTable receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} />,
     );
     expect(container.querySelectorAll("[role='row']").length).toBe(3);
-    expect(container.querySelector(".wind-compare-gust")?.textContent).toBe("—");
-    expect(container.querySelector(".wind-compare-reason")?.textContent).toBe(
+    expect(container.querySelector(".wind-table-gust")?.textContent).toBe("—");
+    expect(container.querySelector(".wind-table-reason")?.textContent).toBe(
       defaultStrings.reasons.upstream_error,
     );
-    expect(container.querySelector(".wind-compare-temp")?.textContent).toContain("14.2");
+    expect(container.querySelector(".wind-table-temp")?.textContent).toContain("14.2");
   });
 
   it("says calm below the WMO threshold and keeps the dash for a dead vane", () => {
@@ -248,9 +248,9 @@ describe("StationCompare", () => {
     });
     const feed = feedFixture([calmish, vaneless]);
     const { container } = render(
-      <StationCompare receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} />,
+      <StationTable receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} />,
     );
-    const cells = container.querySelectorAll(".wind-compare-from");
+    const cells = container.querySelectorAll(".wind-table-from");
     expect(cells[0]?.textContent).toBe(defaultStrings.calm);
     expect(cells[1]?.textContent).toBe("—");
   });
@@ -259,18 +259,18 @@ describe("StationCompare", () => {
     /* 18.4 / 24.1 / 11.2 km/h → 10 / 13 / 6 kn. */
     const feed = feedFixture([okStation()]);
     const { container } = render(
-      <StationCompare receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} unit="knots" />,
+      <StationTable receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} unit="knots" />,
     );
-    expect(container.querySelector(".wind-compare-wind strong")?.textContent).toBe("10");
-    expect(container.querySelector(".wind-compare-wind small")?.textContent).toBe("kn");
-    expect(container.querySelector(".wind-compare-gust")?.textContent).toBe("13");
-    expect(container.querySelector(".wind-compare-lull")?.textContent).toBe("6");
+    expect(container.querySelector(".wind-table-wind strong")?.textContent).toBe("10");
+    expect(container.querySelector(".wind-table-wind small")?.textContent).toBe("kn");
+    expect(container.querySelector(".wind-table-gust")?.textContent).toBe("13");
+    expect(container.querySelector(".wind-table-lull")?.textContent).toBe("6");
   });
 
   it("scales row freshness to each station's cadence", () => {
     const feed = feedFixture([okStation()]);
     const { container } = render(
-      <StationCompare receivedAtMs={NOW_MS - 8 * 60_000} servedAt={feed.servedAt} stations={feed.stations} />,
+      <StationTable receivedAtMs={NOW_MS - 8 * 60_000} servedAt={feed.servedAt} stations={feed.stations} />,
     );
     expect(container.querySelector(".meteo-freshness")?.textContent).toBe(
       defaultStrings.freshness.aging,
@@ -280,7 +280,7 @@ describe("StationCompare", () => {
   it("lets stationMeta replace the source sub-label per station", () => {
     const feed = feedFixture([okStation(), downStation()]);
     const { container } = render(
-      <StationCompare
+      <StationTable
         receivedAtMs={NOW_MS}
         servedAt={feed.servedAt}
         stationMeta={(station) =>
@@ -291,7 +291,7 @@ describe("StationCompare", () => {
         stations={feed.stations}
       />,
     );
-    const subLabels = container.querySelectorAll(".wind-compare-station small");
+    const subLabels = container.querySelectorAll(".wind-table-station small");
     expect(subLabels[0]?.textContent).toBe(`past ${okStation().samplingWindowSeconds} s`);
     expect(subLabels[1]?.textContent).toBe(downStation().sourceLabel);
   });
@@ -639,12 +639,12 @@ describe("StationFeedProvider", () => {
     const feed = feedFixture([okStation(), conditionsStation(), downStation()]);
     const { container } = provided(
       <>
-        <StationCompare />
+        <StationTable />
         <AirMatrix />
       </>,
       feed,
     );
-    expect(container.querySelectorAll(".wind-compare [role='row']").length).toBe(4);
+    expect(container.querySelectorAll(".wind-table [role='row']").length).toBe(4);
     expect(container.querySelector(".meteo-air-trigger")).not.toBeNull();
   });
 
@@ -678,7 +678,7 @@ describe("StationFeedProvider", () => {
       expect(() => render(<CurrentConditions />)).toThrow(
         /<CurrentConditions> resolved no station/,
       );
-      expect(() => render(<StationCompare />)).toThrow(/<StationCompare> resolved no stations/);
+      expect(() => render(<StationTable />)).toThrow(/<StationTable> resolved no stations/);
     } finally {
       quiet.mockRestore();
     }

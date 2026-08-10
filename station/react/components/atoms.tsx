@@ -17,7 +17,7 @@
  *   nothing throws the wiring error. Every atom still works with zero
  *   provider via explicit props.
  * - Display unit is a client conversion (integer rounding, like the dial and
- *   the compare table); the wire value rides the <data> element's `value`
+ *   the station table); the wire value rides the <data> element's `value`
  *   attribute in m/s so the machine-readable number never rounds.
  * - No layout opinions: everything renders inline. */
 import { useEffect, useState } from "react";
@@ -124,7 +124,7 @@ export function Lull(props: SpeedAtomProps) {
 
 /* ---------- temperature and pressure ---------- */
 
-/* One decimal with the degree word, the compare table's format exactly. */
+/* One decimal with the degree word, the station table's format exactly. */
 export function Temperature({ station: stationProp, stationId, strings: stringsProp }: AtomProps) {
   const { context, station } = useResolvedStation("Temperature", stationProp, stationId);
   const words = resolveStrings(mergeStringOverrides(context?.strings, stringsProp));
@@ -169,7 +169,7 @@ export function Pressure({ station: stationProp, stationId, strings: stringsProp
 /* ---------- direction ---------- */
 
 /* Arrow glyph + compass word + degrees via the shared DirectionCell, so the
- * atom, the strip, and the compare table can never disagree: calm (WMO:
+ * atom, the strip, and the station table can never disagree: calm (WMO:
  * below 0.5 m/s) is said in the calm word — an idle vane would fabricate a
  * bearing — and a null bearing on a blowing reading is a broken vane's dash.
  * A blowing bearing also speaks: compassSpoken spells the point out so

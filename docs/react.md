@@ -72,7 +72,7 @@ Per-station components take `station` (or `stationId`); fleet components take `s
 | `WindHistoryChart` | Lull–gust band + graded mean. `thresholds` (guide labels show your declared numbers), `plotHeight` |
 | `TrendChart` | Temperature (°C) or sea-level pressure (hPa) over history. `series: "temperature" \| "pressure"`; null gaps break the trace, never interpolated. No `unit` — the units are the series' own |
 | `WindRose` | Direction shares. `station`/`stationId` or raw `points`, `sectorCount`, `thresholds`, `favorableDirections`. No `unit` — the rose shows percentages |
-| `StationCompare` | One row per `stations` entry; unavailable rows keep their geometry. `servedAt`, `receivedAtMs`, `stationMeta` — the sub-label under each name (default: the source attribution; render the sampling window, a distance, anything the station itself can say) |
+| `StationTable` | One row per `stations` entry; unavailable rows keep their geometry. `servedAt`, `receivedAtMs`, `stationMeta` — the sub-label under each name (default: the source attribution; render the sampling window, a distance, anything the station itself can say) |
 | `StationStrip` | One station on one line — name, wind, lull/gust, FROM, temp, updated + freshness. `station`/`stationId`, `servedAt`, `receivedAtMs`. Absent values dash in place; a capability the station lacks omits its cell; an unavailable station keeps the line, reason in words |
 | `AirMatrix` | Humidity → lightning behind a live disclosure; columns only for conditions-capable `stations` |
 | `FreshnessBadge` | A dot and a word, from `useFreshness` |
@@ -99,7 +99,7 @@ dot-access across an RSC client boundary); rendering one outside
   <WindStation.Header />
   <WindStation.Chart thresholds={{ unit: "knots", values: [6, 11, 15] }} />
   <WindStation.Summary />
-</WindStation> {/* no instrument: the compare table above already states the reading */}
+</WindStation> {/* no instrument: the station table above already states the reading */}
 ```
 
 ### The rose's judgment ring

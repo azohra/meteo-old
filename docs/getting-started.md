@@ -101,7 +101,7 @@ never the document), `servedAt`, and `schemaVersion`.
 ```tsx
 import "@azohra/meteo/station/react/styles.css"; // the default skin (an intentional side effect)
 import {
-  StationFeedProvider, useStation, WindStation, StationCompare,
+  StationFeedProvider, useStation, WindStation, StationTable,
 } from "@azohra/meteo/station/react";
 
 function LiveWind() {
@@ -121,7 +121,7 @@ function LiveWind() {
         unit="knots"                                       // what the numbers wear
       >
         <WindStation />     {/* the feed's primary station, provider-fed */}
-        <StationCompare />  {/* the whole fleet, no props re-threaded */}
+        <StationTable />  {/* the whole fleet, no props re-threaded */}
       </StationFeedProvider>
     </div>
   );

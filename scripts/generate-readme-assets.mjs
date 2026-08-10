@@ -3,7 +3,7 @@
  * the rose of the real WindRose, and the history chart is drawn from the
  * station capability's chart geometry (WindHistoryChart measures itself with
  * a ResizeObserver, so it renders nothing server-side). Chrome that lives in
- * HTML — station name, freshness pill, flank numbers, the compare table —
+ * HTML — station name, freshness pill, flank numbers, the station table —
  * is redrawn here as SVG text, worded from the package's defaultStrings.
  *
  * Output constraints, asserted before writing: self-contained standalone SVG
@@ -544,8 +544,8 @@ function galleryRoseSvg() {
   return svgDocument(280, 236, "light", "WindRose direction distribution", body);
 }
 
-function galleryCompareSvg() {
-  /* StationCompare is an HTML grid; a three-row miniature is redrawn as SVG
+function galleryTableSvg() {
+  /* StationTable is an HTML grid; a three-row miniature is redrawn as SVG
    * text, including the degrade-don't-lie row a broken upstream earns. */
   const columns = { station: 18, wind: 170, gust: 208, from: 222 };
   const row = (y, name, windKmh, gustKmh, bearingDeg) =>
@@ -568,7 +568,7 @@ function galleryCompareSvg() {
     `<line class="wind-grid-line" x1="7" y1="108.5" x2="273" y2="108.5"/>` +
     text(columns.station, 133, "hw-table-strong", "Ridge East") +
     text(110, 133, "hw-italic", words.reasons.timeout);
-  return svgDocument(280, 154, "light", "StationCompare across three stations", body);
+  return svgDocument(280, 154, "light", "StationTable across three stations", body);
 }
 
 /* ---------------- validation and writing --------------------------------- */
@@ -616,7 +616,7 @@ const ASSETS = {
   "gallery-dial.svg": galleryDialSvg(),
   "gallery-chart.svg": galleryChartSvg(),
   "gallery-rose.svg": galleryRoseSvg(),
-  "gallery-compare.svg": galleryCompareSvg(),
+  "gallery-table.svg": galleryTableSvg(),
 };
 
 await mkdir(join(root, "assets"), { recursive: true });

@@ -22,7 +22,7 @@ export { CurrentConditions } from "./components/CurrentConditions.js";
 export { Dial } from "./components/Dial.js";
 export { FreshnessBadge } from "./components/FreshnessBadge.js";
 export { Sparkline } from "./components/Sparkline.js";
-export { StationCompare } from "./components/StationCompare.js";
+export { StationTable } from "./components/StationTable.js";
 /* The ambient default layer: components read feed/clock/display defaults
  * from the provider and explicit props always override it. */
 export { StationFeedProvider, useStationFeedContext } from "./components/StationFeedProvider.js";
