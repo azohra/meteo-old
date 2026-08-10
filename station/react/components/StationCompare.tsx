@@ -8,6 +8,7 @@
  *
  * A real table for screen readers: roles are explicit because grid display
  * drops the implicit ones. */
+import type { ReactNode } from "react";
 import type { SpeedUnit, Station } from "../../index.js";
 import { stationFreshnessThresholds } from "../../index.js";
 import { useFreshness } from "../hooks/useFreshness.js";
@@ -30,6 +31,7 @@ export function StationCompare({
   unit: unitProp,
   strings: stringsProp,
   formatTime: formatTimeProp,
+  stationMeta,
 }: {
   /* A fleet component takes `stations` (per-station components take
    * `station`). Inside <StationFeedProvider> the provider's feed supplies
@@ -42,6 +44,11 @@ export function StationCompare({
   unit?: SpeedUnit;
   strings?: StationStringOverrides;
   formatTime?: FormatTime;
+  /* The sub-label under each station's name. The default is the source
+   * attribution; a consumer whose rows need a different word there — the
+   * sampling window the numbers are taken over, a distance from launch —
+   * renders it from the station itself. Returning null removes the line. */
+  stationMeta?: (station: Station) => ReactNode;
 }) {
   const context = useStationFeedContext();
   const stations = requireResolved(
@@ -79,6 +86,7 @@ export function StationCompare({
             receivedAtMs={receivedAtMs}
             servedAt={servedAt}
             station={station}
+            stationMeta={stationMeta}
             strings={strings}
             unit={unit}
             words={words}
@@ -94,6 +102,7 @@ function CompareRow({
   receivedAtMs,
   servedAt,
   station,
+  stationMeta,
   strings,
   unit,
   words,
@@ -102,6 +111,7 @@ function CompareRow({
   receivedAtMs: number | null;
   servedAt: string | null;
   station: Station;
+  stationMeta: ((station: Station) => ReactNode) | undefined;
   strings: StationStringOverrides | undefined;
   unit: SpeedUnit;
   words: StationStrings;
@@ -118,7 +128,7 @@ function CompareRow({
         <strong>
           <StationNameLink station={station} />
         </strong>
-        <small>{station.sourceLabel}</small>
+        <small>{stationMeta ? stationMeta(station) : station.sourceLabel}</small>
       </span>
       {station.status === "ok" ? (
         <>

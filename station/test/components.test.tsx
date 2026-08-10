@@ -276,6 +276,25 @@ describe("StationCompare", () => {
       defaultStrings.freshness.aging,
     );
   });
+
+  it("lets stationMeta replace the source sub-label per station", () => {
+    const feed = feedFixture([okStation(), downStation()]);
+    const { container } = render(
+      <StationCompare
+        receivedAtMs={NOW_MS}
+        servedAt={feed.servedAt}
+        stationMeta={(station) =>
+          station.status === "ok" && station.samplingWindowSeconds != null
+            ? `past ${station.samplingWindowSeconds} s`
+            : station.sourceLabel
+        }
+        stations={feed.stations}
+      />,
+    );
+    const subLabels = container.querySelectorAll(".wind-compare-station small");
+    expect(subLabels[0]?.textContent).toBe(`past ${okStation().samplingWindowSeconds} s`);
+    expect(subLabels[1]?.textContent).toBe(downStation().sourceLabel);
+  });
 });
 
 describe("StationStrip", () => {

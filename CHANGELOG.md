@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 — 2026-08-10
+
+- **`StationCompare` `stationMeta`**: the sub-label under each station's name
+  is now a render prop — default stays the source attribution, but a consumer
+  can put the station's own facts there ("past 3 s", a distance from launch).
+
 ## 0.1.1 — 2026-08-10
 
 The primitives layer: the atoms the organisms were always made of.
