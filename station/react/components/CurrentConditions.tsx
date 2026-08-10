@@ -11,13 +11,13 @@
  * idle bearing would fabricate a direction, but the anemometer did measure.
  * A blowing reading with no bearing is a broken vane and earns the dash.
  * Unavailable greys the dial and wears the reason in words. */
-import { compassDirection, isCalm, stationFreshnessThresholds } from "../../index.js";
+import { compassDirection, isCalm, resolveDisplay, stationFreshnessThresholds } from "../../index.js";
 import type { SpeedUnit, Station } from "../../index.js";
 import { useFreshness } from "../hooks/useFreshness.js";
-import { roundSpeed, temperatureText, temperatureValue } from "../lib/cells.js";
-import { EM_DASH, defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides } from "../lib/strings.js";
-import type { SpeedThresholds } from "../lib/thresholds.js";
+import { roundSpeed, temperatureText, temperatureValue } from "../../index.js";
+import { EM_DASH } from "../../index.js";
+import type { FormatTime, StationStringOverrides } from "../../index.js";
+import type { SpeedThresholds } from "../../index.js";
 import { Dial } from "./Dial.js";
 import { FreshnessBadge } from "./FreshnessBadge.js";
 import {
@@ -46,7 +46,7 @@ export function CurrentConditions({
   servedAt?: string | null;
   receivedAtMs?: number | null;
   /* Consumer-unit bounds ({ unit, values }); converted to wire m/s once. The
-   * speed arc wears wind-band-0..n of the current reading when given, the
+   * speed arc wears meteo-band-0..n of the current reading when given, the
    * neutral accent otherwise. null opts out of the provider's thresholds. */
   thresholds?: SpeedThresholds | null;
   /* Display unit only: every shown speed converts, banding and geometry stay
@@ -63,12 +63,12 @@ export function CurrentConditions({
   );
   const servedAt = servedAtProp ?? context?.feed?.servedAt ?? null;
   const receivedAtMs = receivedAtMsProp !== undefined ? receivedAtMsProp : (context?.receivedAtMs ?? null);
-  const thresholds = thresholdsProp === undefined ? context?.thresholds : (thresholdsProp ?? undefined);
-  const unit = unitProp ?? context?.unit ?? "kmh";
-  const strings = mergeStringOverrides(context?.strings, stringsProp);
-  const formatTime = formatTimeProp ?? context?.formatTime ?? defaultFormatTime;
-
-  const words = resolveStrings(strings);
+  const { formatTime, strings, thresholds, unit, words } = resolveDisplay(context, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+    thresholds: thresholdsProp,
+    unit: unitProp,
+  });
   const reading = station.status === "ok" ? station.reading : null;
   const status = useFreshness(
     reading?.observedAt ?? null,
@@ -82,14 +82,14 @@ export function CurrentConditions({
   return (
     <div
       aria-label={words.aria.current(station.name)}
-      className="wind-current"
+      className="meteo-current"
       data-status={station.status}
       role="group"
     >
-      <div className="wind-current-instrument">
+      <div className="meteo-current-instrument">
         {station.capabilities.gustLull && (
-          <div className="wind-flank wind-flank-lull">
-            <small className="wind-microlabel">{words.lullLabel}</small>
+          <div className="meteo-current-flank meteo-current-flank-lull">
+            <small className="meteo-microlabel">{words.lullLabel}</small>
             <strong>{reading?.lullMps == null ? EM_DASH : roundSpeed(reading.lullMps, unit)}</strong>
           </div>
         )}
@@ -106,18 +106,18 @@ export function CurrentConditions({
           unit={unit}
         />
         {station.capabilities.gustLull && (
-          <div className="wind-flank wind-flank-gust">
-            <small className="wind-microlabel">{words.gustLabel}</small>
+          <div className="meteo-current-flank meteo-current-flank-gust">
+            <small className="meteo-microlabel">{words.gustLabel}</small>
             <strong>{reading?.gustMps == null ? EM_DASH : roundSpeed(reading.gustMps, unit)}</strong>
           </div>
         )}
       </div>
-      <p className="wind-current-direction">
+      <p className="meteo-current-direction">
         {station.status === "unavailable" ? (
           words.reasons[station.reason]
         ) : blowing && reading.directionDeg != null ? (
           <>
-            <span className="wind-current-from-label">{words.fromLabel}</span>{" "}
+            <span className="meteo-current-from-label">{words.fromLabel}</span>{" "}
             <WindArrow deg={reading.directionDeg} />{" "}
             <strong>{compassDirection(reading.directionDeg)}</strong>{" "}
             {Math.round(reading.directionDeg)}°
@@ -129,18 +129,18 @@ export function CurrentConditions({
         )}
       </p>
       {station.capabilities.temperature && (
-        <p className="wind-current-temp">
+        <p className="meteo-current-temp">
           {temperatureText(reading?.temperatureC ?? null, words)}
           {reading?.windChillC != null && (
-            <span className="wind-current-chill">
+            <span className="meteo-current-chill">
               {" "}· {words.feelsLikeLabel} {temperatureValue(reading.windChillC)} {words.degC}
             </span>
           )}
         </p>
       )}
-      <p className="wind-current-footer">
+      <p className="meteo-current-footer">
         {status != null && <FreshnessBadge status={status} strings={strings} />}
-        <span className="wind-current-observed">
+        <span className="meteo-current-observed">
           {reading == null ? EM_DASH : formatTime(new Date(reading.observedAt))}
         </span>
       </p>

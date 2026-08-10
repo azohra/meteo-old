@@ -13,7 +13,7 @@
  * Colour grading is the axis of control an iframe never offered: given
  * consumer-unit thresholds ({ unit, values } — converted to wire m/s once,
  * in thresholdsToMps), the average trace is drawn per-segment and each
- * segment wears wind-band-0..n from speedBand of its mean, each band's zone
+ * segment wears meteo-band-0..n from speedBand of its mean, each band's zone
  * is tinted behind the plot, and a guide line at each threshold wears the
  * band it opens. What a band means and what colour it wears belong to the
  * consumer's CSS.
@@ -32,6 +32,8 @@ import {
 } from "react";
 import {
   CHART_FALLBACK_WIDTH,
+  CHART_WIDE_PLOT_HEIGHT,
+  CHART_WIDE_PLOT_MIN_WIDTH,
   averagePoints,
   bandPoints,
   chartFrame,
@@ -43,41 +45,24 @@ import {
   isCalm,
   isCalmHistory,
   nearestIndex,
+  resolveDisplay,
   speedBand,
+  stretchFrame,
   thinVanes,
   vanePath,
   vaneTicks,
 } from "../../index.js";
-import type { ChartFrame, History, HistoryPoint, SpeedUnit, Station } from "../../index.js";
-import { EM_DASH, defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides, StationStrings } from "../lib/strings.js";
-import { thresholdsToMps } from "../lib/thresholds.js";
-import type { SpeedThresholds } from "../lib/thresholds.js";
+import type { History, HistoryPoint, SpeedUnit, Station } from "../../index.js";
+import { EM_DASH } from "../../index.js";
+import type { FormatTime, StationStringOverrides, StationStrings } from "../../index.js";
+import { thresholdsToMps } from "../../index.js";
+import type { SpeedThresholds } from "../../index.js";
 import {
   requireResolved,
   resolveStation,
   useStationFeedContext,
 } from "./StationFeedProvider.js";
 import { WindArrow } from "./WindArrow.js";
-
-/* Wide plots earn more vertical room than the core default; narrow ones keep
- * the core's phone-sized frame. */
-const WIDE_PLOT_HEIGHT = 160;
-const WIDE_PLOT_MIN_WIDTH = 520;
-
-/* Stretch the core frame's plot without re-deriving its row math: every row
- * below the plot shifts by the same delta. */
-function stretchFrame(frame: ChartFrame, plotHeight: number): ChartFrame {
-  const delta = plotHeight - (frame.plotBottom - frame.plotTop);
-  if (delta === 0) return frame;
-  return {
-    ...frame,
-    height: frame.height + delta,
-    labelRow: frame.labelRow + delta,
-    plotBottom: frame.plotBottom + delta,
-    vaneRow: frame.vaneRow + delta,
-  };
-}
 
 export function WindHistoryChart({
   station: stationProp,
@@ -92,7 +77,7 @@ export function WindHistoryChart({
    * via stationId → primaryStationId → stations[0]. Unresolvable throws. */
   station?: Station;
   stationId?: string;
-  /* Consumer-unit bounds ({ unit, values }) for wind-band-0..n grading;
+  /* Consumer-unit bounds ({ unit, values }) for meteo-band-0..n grading;
    * converted to wire m/s once. Guide labels print the numbers the consumer
    * declared, converted only when the display unit differs. null opts out of
    * the provider's thresholds. */
@@ -112,11 +97,12 @@ export function WindHistoryChart({
     "station",
     stationProp ?? resolveStation(context, stationId),
   );
-  const thresholds = thresholdsProp === undefined ? context?.thresholds : (thresholdsProp ?? undefined);
-  const unit = unitProp ?? context?.unit ?? "kmh";
-  const strings = mergeStringOverrides(context?.strings, stringsProp);
-  const formatTime = formatTimeProp ?? context?.formatTime ?? defaultFormatTime;
-  const words = resolveStrings(strings);
+  const { formatTime, thresholds, unit, words } = resolveDisplay(context, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+    thresholds: thresholdsProp,
+    unit: unitProp,
+  });
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number | null>(null);
 
@@ -144,14 +130,14 @@ export function WindHistoryChart({
   if (!station.capabilities.history) return null;
   if (!drawable || history == null) {
     return (
-      <div className="wind-chart wind-chart-na" role="note">
+      <div className="meteo-wind-chart meteo-wind-chart-na" role="note">
         {words.noHistory}
       </div>
     );
   }
 
   return (
-    <div className="wind-chart" ref={wrapRef}>
+    <div className="meteo-wind-chart" ref={wrapRef}>
       {width != null && (
         <MeasuredChart
           formatTime={formatTime}
@@ -190,7 +176,7 @@ function MeasuredChart({
   const points = history.points;
   const shown = (averageMps: number) => Math.round(speedFromMps(averageMps, unit));
   /* useId can carry characters url(#…) references choke on. */
-  const hatchId = `wind-hatch-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const hatchId = `meteo-hatch-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   /* Pinned by observedAt, resolved to an index each render (A live feed
    * slides its window; a moment pinned past the window is gone). */
   const [pinnedAt, setPinnedAt] = useState<string | null>(null);
@@ -201,7 +187,9 @@ function MeasuredChart({
   const frame = stretchFrame(
     coreFrame,
     plotHeight ??
-      (width < WIDE_PLOT_MIN_WIDTH ? corePlotHeight : Math.max(corePlotHeight, WIDE_PLOT_HEIGHT)),
+      (width < CHART_WIDE_PLOT_MIN_WIDTH
+        ? corePlotHeight
+        : Math.max(corePlotHeight, CHART_WIDE_PLOT_HEIGHT)),
   );
   /* Axis rounding follows the DISPLAY unit: the ceiling snaps to a 5-step
    * and floors at 10 in whatever unit the labels will print, so a knots
@@ -288,7 +276,7 @@ function MeasuredChart({
       <output
         aria-label={words.aria.readout(stationName)}
         aria-live={previewIndex == null ? "polite" : "off"}
-        className="wind-chart-readout"
+        className="meteo-wind-chart-readout"
       >
         {active ? (
           <>
@@ -322,7 +310,7 @@ function MeasuredChart({
       </output>
       <svg
         aria-label={words.aria.chart(stationName)}
-        className="wind-chart-svg"
+        className="meteo-wind-chart-svg"
         height={frame.height}
         role="img"
         viewBox={`0 0 ${frame.width} ${frame.height}`}
@@ -336,7 +324,7 @@ function MeasuredChart({
             patternUnits="userSpaceOnUse"
             width="6"
           >
-            <line className="wind-gap-hatch" x1="0" x2="0" y1="0" y2="6" />
+            <line className="meteo-wind-gap-hatch" x1="0" x2="0" y1="0" y2="6" />
           </pattern>
         </defs>
         {zoneCuts != null &&
@@ -345,7 +333,7 @@ function MeasuredChart({
             const upper = zoneCuts[index + 1] as number;
             return (
               <rect
-                className={`wind-zone wind-band-${speedBand((lower + upper) / 2, boundsMps)}`}
+                className={`meteo-wind-zone meteo-band-${speedBand((lower + upper) / 2, boundsMps)}`}
                 height={scales.yAt(lower) - scales.yAt(upper)}
                 key={lower}
                 width={frame.right - frame.left}
@@ -358,8 +346,8 @@ function MeasuredChart({
           const gridY = frame.plotBottom - fraction * (frame.plotBottom - frame.plotTop);
           return (
             <g key={fraction}>
-              <line className="wind-grid-line" x1={frame.left} x2={frame.right} y1={gridY} y2={gridY} />
-              <text className="wind-grid-label" textAnchor="end" x={frame.left - 6} y={gridY + 5}>
+              <line className="meteo-grid-line" x1={frame.left} x2={frame.right} y1={gridY} y2={gridY} />
+              <text className="meteo-grid-label" textAnchor="end" x={frame.left - 6} y={gridY + 5}>
                 {shown(scales.scaleMax * fraction)}
               </text>
             </g>
@@ -369,7 +357,7 @@ function MeasuredChart({
           thresholdGuides.map(({ boundMps, label }) => (
             <g key={boundMps}>
               <line
-                className={`wind-threshold wind-band-${speedBand(boundMps, boundsMps)}`}
+                className={`meteo-wind-threshold meteo-band-${speedBand(boundMps, boundsMps)}`}
                 x1={frame.left}
                 x2={frame.right}
                 y1={scales.yAt(boundMps)}
@@ -378,7 +366,7 @@ function MeasuredChart({
               {/* The guide sits at the wire-unit bound; its label prints the
                * consumer's declared number in the display unit. */}
               <text
-                className={`wind-threshold-label wind-band-${speedBand(boundMps, boundsMps)}`}
+                className={`meteo-wind-threshold-label meteo-band-${speedBand(boundMps, boundsMps)}`}
                 textAnchor="end"
                 x={frame.right - 3}
                 y={scales.yAt(boundMps) - 3}
@@ -390,7 +378,7 @@ function MeasuredChart({
         {/* One guide per vane, so a vane ties to the moment above it. */}
         {vanes.map((vane) => (
           <line
-            className="wind-guide"
+            className="meteo-wind-guide"
             key={`guide-${vane.midMs}`}
             x1={scales.xAtMs(vane.midMs)}
             x2={scales.xAtMs(vane.midMs)}
@@ -400,7 +388,7 @@ function MeasuredChart({
         ))}
         {gaps.map(([startMs, endMs]) => (
           <rect
-            className="wind-gap"
+            className="meteo-wind-gap"
             fill={`url(#${hatchId})`}
             height={frame.plotBottom - frame.plotTop}
             key={startMs}
@@ -409,13 +397,13 @@ function MeasuredChart({
             y={frame.plotTop}
           />
         ))}
-        {band != null && <polygon className="wind-band" points={band} />}
+        {band != null && <polygon className="meteo-wind-band" points={band} />}
         {meanSegments == null ? (
-          <polyline className="wind-mean" points={averagePoints(points, scales)} />
+          <polyline className="meteo-wind-mean" points={averagePoints(points, scales)} />
         ) : (
           meanSegments.map((segment) => (
             <line
-              className={`wind-mean-segment wind-band-${segment.band}`}
+              className={`meteo-wind-mean-segment meteo-band-${segment.band}`}
               key={segment.key}
               x1={segment.x1}
               x2={segment.x2}
@@ -428,7 +416,7 @@ function MeasuredChart({
          * feed, not a windless day. */}
         {calm && (
           <text
-            className="wind-calm-note"
+            className="meteo-wind-calm-note"
             textAnchor="middle"
             x={(frame.left + frame.right) / 2}
             y={(frame.plotTop + frame.plotBottom) / 2 + 4}
@@ -436,14 +424,14 @@ function MeasuredChart({
             {words.calmHistory}
           </text>
         )}
-        <text className="wind-row-label" textAnchor="end" x={frame.left - 8} y={frame.vaneRow + 4}>
+        <text className="meteo-wind-row-label" textAnchor="end" x={frame.left - 8} y={frame.vaneRow + 4}>
           {words.toLabel}
         </text>
         {/* A window that was calm throughout has no direction to point. */}
         {vanes.map((vane) =>
           vane.directionDeg == null ? (
             <text
-              className="wind-vane-calm"
+              className="meteo-wind-vane-calm"
               key={vane.midMs}
               textAnchor="middle"
               x={scales.xAtMs(vane.midMs)}
@@ -453,7 +441,7 @@ function MeasuredChart({
             </text>
           ) : (
             <path
-              className="wind-vane"
+              className="meteo-wind-vane"
               d={vanePath(scales.xAtMs(vane.midMs), frame.vaneRow, vane.directionDeg)}
               key={vane.midMs}
             />
@@ -461,7 +449,7 @@ function MeasuredChart({
         )}
         {ticks.map(({ index, timeMs, x }) => (
           <text
-            className="wind-tick"
+            className="meteo-tick"
             key={index}
             textAnchor={index === 0 ? "start" : index === 4 ? "end" : "middle"}
             x={x}
@@ -473,14 +461,14 @@ function MeasuredChart({
         {active && (
           <>
             <line
-              className="wind-cursor"
+              className="meteo-cursor"
               x1={scales.xAt(active.observedAt)}
               x2={scales.xAt(active.observedAt)}
               y1={frame.plotTop}
               y2={frame.vaneRow + 9}
             />
             <circle
-              className="wind-cursor-dot"
+              className="meteo-cursor-dot"
               cx={scales.xAt(active.observedAt)}
               cy={scales.yAt(active.averageMps)}
               r={3}
@@ -489,7 +477,7 @@ function MeasuredChart({
         )}
         {/* On top of everything drawn, so the pointer always lands here. */}
         <rect
-          className="wind-hit"
+          className="meteo-hit"
           fill="transparent"
           height={frame.height}
           onClick={handleClick}

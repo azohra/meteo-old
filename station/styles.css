@@ -6,7 +6,7 @@
  *   the freshness states (live/aging/stale). Any Azohra Meteo capability's
  *   components (wind today, forecast tomorrow) wear these.
  * - `--wind-*` is genuinely wind-scoped — the lull–gust band fill, the mean
- *   trace, vanes, the inspection cursor, the wind-band-0..4 ramp, and the
+ *   trace, vanes, the inspection cursor, the meteo-band-0..4 ramp, and the
  *   rose's favorable/unfavorable judgment ring.
  *
  * Every colour rides a token with a light-theme fallback baked into the
@@ -20,7 +20,7 @@
  * The whole sheet lives in @layer meteo, so any unlayered consumer rule
  * outranks it without specificity games.
  *
- * wind-band-0..4 is a placeholder ramp — calm blue through green and amber to
+ * meteo-band-0..4 is a placeholder ramp — calm blue through green and amber to
  * red. What a band means (flyable, marginal, nuked) and what colour it wears
  * belong to the consumer. */
 
@@ -45,19 +45,19 @@
   --meteo-shadow:
     0 1px 2px light-dark(rgb(23 35 46 / 0.06), rgb(0 0 0 / 0.35)),
     0 8px 24px light-dark(rgb(23 35 46 / 0.05), rgb(0 0 0 / 0.3));
-  --wind-band-fill: light-dark(rgba(15, 116, 144, 0.22), rgba(69, 195, 224, 0.22));
-  --wind-mean: light-dark(#0f7490, #45c3e0);
-  --wind-vane: light-dark(#3b4a58, #b8c6d3);
-  --wind-cursor: light-dark(#d97706, #f5a623);
+  --meteo-wind-band-fill: light-dark(rgba(15, 116, 144, 0.22), rgba(69, 195, 224, 0.22));
+  --meteo-wind-mean: light-dark(#0f7490, #45c3e0);
+  --meteo-wind-vane: light-dark(#3b4a58, #b8c6d3);
+  --meteo-cursor: light-dark(#d97706, #f5a623);
   /* The rose's judgment ring: green for a favorable direction sector, a
    * muted red for the rest — quieter than the band ramp on purpose. */
-  --wind-favorable: light-dark(#2e9e63, #34d17b);
-  --wind-unfavorable: light-dark(#c98a80, #a06058);
-  --wind-band-0: light-dark(#56a2cc, #5fb2e0);
-  --wind-band-1: light-dark(#2e9e63, #34d17b);
-  --wind-band-2: light-dark(#d9a013, #eab308);
-  --wind-band-3: light-dark(#e2662c, #f4732c);
-  --wind-band-4: light-dark(#c22727, #ef4444);
+  --meteo-wind-favorable: light-dark(#2e9e63, #34d17b);
+  --meteo-wind-unfavorable: light-dark(#c98a80, #a06058);
+  --meteo-band-0: light-dark(#56a2cc, #5fb2e0);
+  --meteo-band-1: light-dark(#2e9e63, #34d17b);
+  --meteo-band-2: light-dark(#d9a013, #eab308);
+  --meteo-band-3: light-dark(#e2662c, #f4732c);
+  --meteo-band-4: light-dark(#c22727, #ef4444);
 }
 
 /* A manual toggle beats the system preference by pinning the scheme
@@ -72,18 +72,18 @@
 
 /* ---------- shared ---------- */
 
-.wind-station,
-.wind-current,
-.wind-chart,
+.meteo-station-card,
+.meteo-current,
+.meteo-wind-chart,
 .meteo-trend,
-.wind-table,
-.wind-rose,
-.wind-rose-na {
+.meteo-station-table,
+.meteo-wind-rose,
+.meteo-wind-rose-na {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   color: var(--meteo-ink, #17232e);
 }
 
-.wind-arrow {
+.meteo-wind-arrow {
   display: inline-block;
   vertical-align: -0.08em;
   color: var(--meteo-accent, #0f7490);
@@ -91,7 +91,7 @@
 
 /* One voice for every caption-grade label: flank labels, summary terms,
  * table headers. */
-.wind-microlabel {
+.meteo-microlabel {
   font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -177,15 +177,15 @@
   color: var(--meteo-muted, #62717f);
 }
 
-.meteo-band-chip[data-band="0"] { color: var(--wind-band-0, #56a2cc); }
-.meteo-band-chip[data-band="1"] { color: var(--wind-band-1, #2e9e63); }
-.meteo-band-chip[data-band="2"] { color: var(--wind-band-2, #d9a013); }
-.meteo-band-chip[data-band="3"] { color: var(--wind-band-3, #e2662c); }
-.meteo-band-chip[data-band="4"] { color: var(--wind-band-4, #c22727); }
+.meteo-band-chip[data-band="0"] { color: var(--meteo-band-0, #56a2cc); }
+.meteo-band-chip[data-band="1"] { color: var(--meteo-band-1, #2e9e63); }
+.meteo-band-chip[data-band="2"] { color: var(--meteo-band-2, #d9a013); }
+.meteo-band-chip[data-band="3"] { color: var(--meteo-band-3, #e2662c); }
+.meteo-band-chip[data-band="4"] { color: var(--meteo-band-4, #c22727); }
 
 /* ---------- current conditions: the instrument ---------- */
 
-.wind-current {
+.meteo-current {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -197,13 +197,13 @@
   box-shadow: var(--meteo-shadow, 0 1px 2px rgb(23 35 46 / 0.06), 0 8px 24px rgb(23 35 46 / 0.05));
 }
 
-.wind-current-instrument {
+.meteo-current-instrument {
   display: flex;
   align-items: center;
   gap: 1.1rem;
 }
 
-.wind-flank {
+.meteo-current-flank {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -211,7 +211,7 @@
   min-width: 3ch;
 }
 
-.wind-flank strong {
+.meteo-current-flank strong {
   font-size: 1.35rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -219,23 +219,23 @@
   color: var(--meteo-ink, #17232e);
 }
 
-.wind-dial-face {
+.meteo-wind-dial-face {
   fill: var(--meteo-surface-raised, #f4f6f9);
   stroke: none;
 }
 
 /* Radial shading over the face; the stop colours carry the tokens. */
-.wind-dial-bezel-in {
+.meteo-wind-dial-bezel-in {
   stop-color: var(--meteo-surface-raised, #f4f6f9);
   stop-opacity: 0;
 }
 
-.wind-dial-bezel-out {
+.meteo-wind-dial-bezel-out {
   stop-color: var(--meteo-ink, #17232e);
   stop-opacity: 0.1;
 }
 
-.wind-dial-ring {
+.meteo-wind-dial-ring {
   fill: none;
   stroke: var(--meteo-border, #dbe2e9);
   stroke-width: 1.5;
@@ -243,55 +243,55 @@
 
 /* The speed arc: the current reading's share of the dial scale, wearing the
  * reading's band when thresholds grade it. */
-.wind-dial-arc {
+.meteo-wind-dial-arc {
   fill: none;
   stroke: var(--meteo-accent, #0f7490);
   stroke-width: 5.5;
   stroke-linecap: round;
 }
 
-.wind-dial-arc.wind-band-0 { stroke: var(--wind-band-0, #56a2cc); }
-.wind-dial-arc.wind-band-1 { stroke: var(--wind-band-1, #2e9e63); }
-.wind-dial-arc.wind-band-2 { stroke: var(--wind-band-2, #d9a013); }
-.wind-dial-arc.wind-band-3 { stroke: var(--wind-band-3, #e2662c); }
-.wind-dial-arc.wind-band-4 { stroke: var(--wind-band-4, #c22727); }
+.meteo-wind-dial-arc.meteo-band-0 { stroke: var(--meteo-band-0, #56a2cc); }
+.meteo-wind-dial-arc.meteo-band-1 { stroke: var(--meteo-band-1, #2e9e63); }
+.meteo-wind-dial-arc.meteo-band-2 { stroke: var(--meteo-band-2, #d9a013); }
+.meteo-wind-dial-arc.meteo-band-3 { stroke: var(--meteo-band-3, #e2662c); }
+.meteo-wind-dial-arc.meteo-band-4 { stroke: var(--meteo-band-4, #c22727); }
 
-.wind-dial-tick {
+.meteo-wind-dial-tick {
   stroke: var(--meteo-muted, #62717f);
   stroke-width: 1;
   opacity: 0.55;
 }
 
-.wind-dial-tick-cardinal {
+.meteo-wind-dial-tick-cardinal {
   stroke: var(--meteo-ink, #17232e);
   stroke-width: 2;
   opacity: 0.9;
 }
 
-.wind-dial-letter {
+.meteo-wind-dial-letter {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 11px;
   font-weight: 600;
   fill: var(--meteo-muted, #62717f);
 }
 
-.wind-needle-blade {
+.meteo-wind-needle-blade {
   fill: var(--meteo-accent, #0f7490);
   stroke: none;
 }
 
-.wind-needle-counterweight {
+.meteo-wind-needle-counterweight {
   fill: var(--meteo-accent, #0f7490);
   stroke: none;
 }
 
-.wind-dial-hub {
+.meteo-wind-dial-hub {
   fill: var(--meteo-surface-raised, #f4f6f9);
   stroke: var(--meteo-border, #dbe2e9);
   stroke-width: 1.5;
 }
 
-.wind-dial-speed {
+.meteo-wind-dial-speed {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 37px;
   font-weight: 750;
@@ -300,24 +300,24 @@
   fill: var(--meteo-ink, #17232e);
 }
 
-.wind-dial-unit {
+.meteo-wind-dial-unit {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 10px;
   fill: var(--meteo-muted, #62717f);
 }
 
-.wind-dial-reason {
+.meteo-wind-dial-reason {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 10.5px;
   fill: var(--meteo-muted, #62717f);
 }
 
-.wind-dial-unavailable {
+.meteo-wind-dial-unavailable {
   filter: grayscale(1);
   opacity: 0.55;
 }
 
-.wind-current-direction {
+.meteo-current-direction {
   margin: 0;
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
@@ -326,17 +326,17 @@
   min-height: 1.4em;
 }
 
-.wind-current[data-status="unavailable"] .wind-current-direction {
+.meteo-current[data-status="unavailable"] .meteo-current-direction {
   color: var(--meteo-muted, #62717f);
   font-style: italic;
 }
 
-.wind-current-from-label {
+.meteo-current-from-label {
   color: var(--meteo-muted, #62717f);
   font-size: 0.8em;
 }
 
-.wind-current-temp {
+.meteo-current-temp {
   margin: 0;
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
@@ -345,7 +345,7 @@
   min-height: 1.3em;
 }
 
-.wind-current-footer {
+.meteo-current-footer {
   margin: 0;
   display: flex;
   align-items: center;
@@ -358,13 +358,13 @@
 
 /* ---------- history chart ---------- */
 
-.wind-chart {
+.meteo-wind-chart {
   width: 100%;
 }
 
-.wind-chart-na,
+.meteo-wind-chart-na,
 .meteo-trend-na,
-.wind-rose-na {
+.meteo-wind-rose-na {
   padding: 0.75rem 1rem;
   font-size: 0.85rem;
   font-style: italic;
@@ -375,7 +375,7 @@
 }
 
 /* Fixed minimum height so pinning and unpinning never moves the chart. */
-.wind-chart-readout,
+.meteo-wind-chart-readout,
 .meteo-trend-readout {
   display: flex;
   flex-wrap: wrap;
@@ -389,18 +389,18 @@
   font-feature-settings: "tnum";
 }
 
-.wind-chart-readout strong,
+.meteo-wind-chart-readout strong,
 .meteo-trend-readout strong {
   color: var(--meteo-accent, #0f7490);
   font-weight: 700;
 }
 
-.wind-chart-svg,
+.meteo-wind-chart-svg,
 .meteo-trend-svg {
   display: block;
 }
 
-.wind-chart-svg text,
+.meteo-wind-chart-svg text,
 .meteo-trend-svg text {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 10.5px;
@@ -409,112 +409,112 @@
   font-feature-settings: "tnum";
 }
 
-.wind-grid-line {
+.meteo-grid-line {
   stroke: var(--meteo-grid, #e5eaef);
   stroke-width: 1;
 }
 
 /* Band zones: each band's territory tinted at a whisper behind the plot. */
-.wind-zone {
+.meteo-wind-zone {
   stroke: none;
   fill-opacity: 0.05;
 }
 
-.wind-zone.wind-band-0 { fill: var(--wind-band-0, #56a2cc); }
-.wind-zone.wind-band-1 { fill: var(--wind-band-1, #2e9e63); }
-.wind-zone.wind-band-2 { fill: var(--wind-band-2, #d9a013); }
-.wind-zone.wind-band-3 { fill: var(--wind-band-3, #e2662c); }
-.wind-zone.wind-band-4 { fill: var(--wind-band-4, #c22727); }
+.meteo-wind-zone.meteo-band-0 { fill: var(--meteo-band-0, #56a2cc); }
+.meteo-wind-zone.meteo-band-1 { fill: var(--meteo-band-1, #2e9e63); }
+.meteo-wind-zone.meteo-band-2 { fill: var(--meteo-band-2, #d9a013); }
+.meteo-wind-zone.meteo-band-3 { fill: var(--meteo-band-3, #e2662c); }
+.meteo-wind-zone.meteo-band-4 { fill: var(--meteo-band-4, #c22727); }
 
 /* Threshold guides wear the band they open. */
-.wind-threshold {
+.meteo-wind-threshold {
   stroke: var(--meteo-muted, #62717f);
   stroke-width: 1;
   stroke-dasharray: 2 5;
   opacity: 0.7;
 }
 
-.wind-threshold.wind-band-0 { stroke: var(--wind-band-0, #56a2cc); }
-.wind-threshold.wind-band-1 { stroke: var(--wind-band-1, #2e9e63); }
-.wind-threshold.wind-band-2 { stroke: var(--wind-band-2, #d9a013); }
-.wind-threshold.wind-band-3 { stroke: var(--wind-band-3, #e2662c); }
-.wind-threshold.wind-band-4 { stroke: var(--wind-band-4, #c22727); }
+.meteo-wind-threshold.meteo-band-0 { stroke: var(--meteo-band-0, #56a2cc); }
+.meteo-wind-threshold.meteo-band-1 { stroke: var(--meteo-band-1, #2e9e63); }
+.meteo-wind-threshold.meteo-band-2 { stroke: var(--meteo-band-2, #d9a013); }
+.meteo-wind-threshold.meteo-band-3 { stroke: var(--meteo-band-3, #e2662c); }
+.meteo-wind-threshold.meteo-band-4 { stroke: var(--meteo-band-4, #c22727); }
 
-.wind-chart-svg text.wind-threshold-label {
+.meteo-wind-chart-svg text.meteo-wind-threshold-label {
   font-size: 9px;
   font-weight: 650;
 }
 
-.wind-threshold-label.wind-band-0 { fill: var(--wind-band-0, #56a2cc); }
-.wind-threshold-label.wind-band-1 { fill: var(--wind-band-1, #2e9e63); }
-.wind-threshold-label.wind-band-2 { fill: var(--wind-band-2, #d9a013); }
-.wind-threshold-label.wind-band-3 { fill: var(--wind-band-3, #e2662c); }
-.wind-threshold-label.wind-band-4 { fill: var(--wind-band-4, #c22727); }
+.meteo-wind-threshold-label.meteo-band-0 { fill: var(--meteo-band-0, #56a2cc); }
+.meteo-wind-threshold-label.meteo-band-1 { fill: var(--meteo-band-1, #2e9e63); }
+.meteo-wind-threshold-label.meteo-band-2 { fill: var(--meteo-band-2, #d9a013); }
+.meteo-wind-threshold-label.meteo-band-3 { fill: var(--meteo-band-3, #e2662c); }
+.meteo-wind-threshold-label.meteo-band-4 { fill: var(--meteo-band-4, #c22727); }
 
-.wind-guide {
+.meteo-wind-guide {
   stroke: var(--meteo-grid, #e5eaef);
   stroke-width: 1;
   stroke-dasharray: 1 4;
 }
 
-.wind-gap-hatch {
+.meteo-wind-gap-hatch {
   stroke: var(--meteo-gap, rgba(98, 113, 127, 0.5));
   stroke-width: 1.25;
 }
 
-.wind-band {
-  fill: var(--wind-band-fill, rgba(15, 116, 144, 0.22));
+.meteo-wind-band {
+  fill: var(--meteo-wind-band-fill, rgba(15, 116, 144, 0.22));
   stroke: none;
 }
 
-.wind-mean {
+.meteo-wind-mean {
   fill: none;
-  stroke: var(--wind-mean, #0f7490);
+  stroke: var(--meteo-wind-mean, #0f7490);
   stroke-width: 3.5;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
-.wind-mean-segment {
+.meteo-wind-mean-segment {
   fill: none;
   stroke-width: 3.5;
   stroke-linecap: round;
 }
 
-.wind-mean-segment.wind-band-0 { stroke: var(--wind-band-0, #56a2cc); }
-.wind-mean-segment.wind-band-1 { stroke: var(--wind-band-1, #2e9e63); }
-.wind-mean-segment.wind-band-2 { stroke: var(--wind-band-2, #d9a013); }
-.wind-mean-segment.wind-band-3 { stroke: var(--wind-band-3, #e2662c); }
-.wind-mean-segment.wind-band-4 { stroke: var(--wind-band-4, #c22727); }
+.meteo-wind-mean-segment.meteo-band-0 { stroke: var(--meteo-band-0, #56a2cc); }
+.meteo-wind-mean-segment.meteo-band-1 { stroke: var(--meteo-band-1, #2e9e63); }
+.meteo-wind-mean-segment.meteo-band-2 { stroke: var(--meteo-band-2, #d9a013); }
+.meteo-wind-mean-segment.meteo-band-3 { stroke: var(--meteo-band-3, #e2662c); }
+.meteo-wind-mean-segment.meteo-band-4 { stroke: var(--meteo-band-4, #c22727); }
 
-.wind-calm-note {
+.meteo-wind-calm-note {
   font-size: 12px;
   font-style: italic;
 }
 
-.wind-row-label {
+.meteo-wind-row-label {
   font-size: 9px;
   letter-spacing: 0.08em;
 }
 
-.wind-vane {
+.meteo-wind-vane {
   fill: none;
-  stroke: var(--wind-vane, #3b4a58);
+  stroke: var(--meteo-wind-vane, #3b4a58);
   stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.wind-cursor {
-  stroke: var(--wind-cursor, #d97706);
+.meteo-cursor {
+  stroke: var(--meteo-cursor, #d97706);
   stroke-width: 1;
 }
 
-.wind-cursor-dot {
-  fill: var(--wind-cursor, #d97706);
+.meteo-cursor-dot {
+  fill: var(--meteo-cursor, #d97706);
 }
 
-.wind-hit {
+.meteo-hit {
   cursor: crosshair;
   /* A vertical swipe over the chart must stay a scroll. */
   touch-action: pan-y;
@@ -525,7 +525,7 @@
 /* The history chart at word size. Inline content (a table cell, a
  * sentence), so it carries display/vertical-align; the trace is a 1.5px
  * whisper where the big chart's mean is a 3.5px voice, so it cannot reuse
- * .wind-mean / .wind-mean-segment. Colours all ride the existing tokens. */
+ * .meteo-wind-mean / .meteo-wind-mean-segment. Colours all ride the existing tokens. */
 
 .meteo-sparkline {
   display: inline-block;
@@ -545,14 +545,14 @@
 
 /* The lull–gust band behind the trace, in the big chart's fill. */
 .meteo-sparkline-band {
-  fill: var(--wind-band-fill, rgba(15, 116, 144, 0.22));
+  fill: var(--meteo-wind-band-fill, rgba(15, 116, 144, 0.22));
   stroke: none;
 }
 
 /* The average trace: the mean line's colour at sparkline weight. */
 .meteo-sparkline-line {
   fill: none;
-  stroke: var(--wind-mean, #0f7490);
+  stroke: var(--meteo-wind-mean, #0f7490);
   stroke-width: 1.5;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -560,29 +560,29 @@
 
 /* A one-sample run between gaps: still a measurement, drawn as a dot. */
 .meteo-sparkline-dot {
-  fill: var(--wind-mean, #0f7490);
+  fill: var(--meteo-wind-mean, #0f7490);
 }
 
-.meteo-sparkline-dot.wind-band-0 { fill: var(--wind-band-0, #56a2cc); }
-.meteo-sparkline-dot.wind-band-1 { fill: var(--wind-band-1, #2e9e63); }
-.meteo-sparkline-dot.wind-band-2 { fill: var(--wind-band-2, #d9a013); }
-.meteo-sparkline-dot.wind-band-3 { fill: var(--wind-band-3, #e2662c); }
-.meteo-sparkline-dot.wind-band-4 { fill: var(--wind-band-4, #c22727); }
+.meteo-sparkline-dot.meteo-band-0 { fill: var(--meteo-band-0, #56a2cc); }
+.meteo-sparkline-dot.meteo-band-1 { fill: var(--meteo-band-1, #2e9e63); }
+.meteo-sparkline-dot.meteo-band-2 { fill: var(--meteo-band-2, #d9a013); }
+.meteo-sparkline-dot.meteo-band-3 { fill: var(--meteo-band-3, #e2662c); }
+.meteo-sparkline-dot.meteo-band-4 { fill: var(--meteo-band-4, #c22727); }
 
-/* Per-segment grading when thresholds are given — the wind-band-N pattern
+/* Per-segment grading when thresholds are given — the meteo-band-N pattern
  * at sparkline weight. */
 .meteo-sparkline-segment {
   fill: none;
-  stroke: var(--wind-mean, #0f7490);
+  stroke: var(--meteo-wind-mean, #0f7490);
   stroke-width: 1.5;
   stroke-linecap: round;
 }
 
-.meteo-sparkline-segment.wind-band-0 { stroke: var(--wind-band-0, #56a2cc); }
-.meteo-sparkline-segment.wind-band-1 { stroke: var(--wind-band-1, #2e9e63); }
-.meteo-sparkline-segment.wind-band-2 { stroke: var(--wind-band-2, #d9a013); }
-.meteo-sparkline-segment.wind-band-3 { stroke: var(--wind-band-3, #e2662c); }
-.meteo-sparkline-segment.wind-band-4 { stroke: var(--wind-band-4, #c22727); }
+.meteo-sparkline-segment.meteo-band-0 { stroke: var(--meteo-band-0, #56a2cc); }
+.meteo-sparkline-segment.meteo-band-1 { stroke: var(--meteo-band-1, #2e9e63); }
+.meteo-sparkline-segment.meteo-band-2 { stroke: var(--meteo-band-2, #d9a013); }
+.meteo-sparkline-segment.meteo-band-3 { stroke: var(--meteo-band-3, #e2662c); }
+.meteo-sparkline-segment.meteo-band-4 { stroke: var(--meteo-band-4, #c22727); }
 
 /* ---------- trend chart ---------- */
 
@@ -594,7 +594,7 @@
  * background fact, not the wind. */
 .meteo-trend-line {
   fill: none;
-  stroke: var(--wind-mean, #0f7490);
+  stroke: var(--meteo-wind-mean, #0f7490);
   stroke-width: 2.5;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -602,23 +602,23 @@
 
 /* A one-sample run between gaps: still a measurement, drawn as a dot. */
 .meteo-trend-dot {
-  fill: var(--wind-mean, #0f7490);
+  fill: var(--meteo-wind-mean, #0f7490);
 }
 
 /* ---------- rose ---------- */
 
-.wind-rose {
+.meteo-wind-rose {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
 }
 
-.wind-rose-svg {
+.meteo-wind-rose-svg {
   display: block;
 }
 
-.wind-rose-grid {
+.meteo-wind-rose-grid {
   fill: none;
   stroke: var(--meteo-grid, #e5eaef);
   stroke-width: 1;
@@ -626,41 +626,41 @@
 
 /* The judgment ring: favorable arcs paint over the unfavorable circle. The
  * ring judges direction; the petals report distribution. */
-.wind-rose-ring-unfavorable {
+.meteo-wind-rose-ring-unfavorable {
   fill: none;
-  stroke: var(--wind-unfavorable, #c98a80);
+  stroke: var(--meteo-wind-unfavorable, #c98a80);
   stroke-width: 3;
   opacity: 0.55;
 }
 
-.wind-rose-ring-favorable {
+.meteo-wind-rose-ring-favorable {
   fill: none;
-  stroke: var(--wind-favorable, #2e9e63);
+  stroke: var(--meteo-wind-favorable, #2e9e63);
   stroke-width: 3;
   stroke-linecap: butt;
 }
 
-.wind-rose-tick {
+.meteo-wind-rose-tick {
   stroke: var(--meteo-muted, #62717f);
   stroke-width: 1;
   opacity: 0.35;
 }
 
-.wind-rose-letter {
+.meteo-wind-rose-letter {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 12.5px;
   font-weight: 650;
   fill: var(--meteo-ink, #17232e);
 }
 
-.wind-rose-ring-label {
+.meteo-wind-rose-ring-label {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 8.5px;
   fill: var(--meteo-muted, #62717f);
   font-variant-numeric: tabular-nums;
 }
 
-.wind-rose-petal {
+.meteo-wind-rose-petal {
   fill: var(--meteo-accent, #0f7490);
   fill-opacity: 0.85;
   stroke: color-mix(in srgb, var(--meteo-accent, #0f7490) 72%, black);
@@ -668,39 +668,39 @@
   stroke-linejoin: round;
 }
 
-.wind-rose-petal.wind-band-0 {
-  fill: var(--wind-band-0, #56a2cc);
-  stroke: color-mix(in srgb, var(--wind-band-0, #56a2cc) 72%, black);
+.meteo-wind-rose-petal.meteo-band-0 {
+  fill: var(--meteo-band-0, #56a2cc);
+  stroke: color-mix(in srgb, var(--meteo-band-0, #56a2cc) 72%, black);
 }
-.wind-rose-petal.wind-band-1 {
-  fill: var(--wind-band-1, #2e9e63);
-  stroke: color-mix(in srgb, var(--wind-band-1, #2e9e63) 72%, black);
+.meteo-wind-rose-petal.meteo-band-1 {
+  fill: var(--meteo-band-1, #2e9e63);
+  stroke: color-mix(in srgb, var(--meteo-band-1, #2e9e63) 72%, black);
 }
-.wind-rose-petal.wind-band-2 {
-  fill: var(--wind-band-2, #d9a013);
-  stroke: color-mix(in srgb, var(--wind-band-2, #d9a013) 72%, black);
+.meteo-wind-rose-petal.meteo-band-2 {
+  fill: var(--meteo-band-2, #d9a013);
+  stroke: color-mix(in srgb, var(--meteo-band-2, #d9a013) 72%, black);
 }
-.wind-rose-petal.wind-band-3 {
-  fill: var(--wind-band-3, #e2662c);
-  stroke: color-mix(in srgb, var(--wind-band-3, #e2662c) 72%, black);
+.meteo-wind-rose-petal.meteo-band-3 {
+  fill: var(--meteo-band-3, #e2662c);
+  stroke: color-mix(in srgb, var(--meteo-band-3, #e2662c) 72%, black);
 }
-.wind-rose-petal.wind-band-4 {
-  fill: var(--wind-band-4, #c22727);
-  stroke: color-mix(in srgb, var(--wind-band-4, #c22727) 72%, black);
+.meteo-wind-rose-petal.meteo-band-4 {
+  fill: var(--meteo-band-4, #c22727);
+  stroke: color-mix(in srgb, var(--meteo-band-4, #c22727) 72%, black);
 }
 
-.wind-rose-hub {
+.meteo-wind-rose-hub {
   fill: var(--meteo-surface, #ffffff);
   stroke: var(--meteo-border, #dbe2e9);
   stroke-width: 1;
 }
 
-.wind-rose-dot {
+.meteo-wind-rose-dot {
   fill: var(--meteo-muted, #62717f);
 }
 
 /* The calm share is a caption, not hub fine print. */
-.wind-rose-calm {
+.meteo-wind-rose-calm {
   margin: 0;
   font-size: 0.8rem;
   font-weight: 600;
@@ -711,7 +711,7 @@
 
 /* ---------- station table ---------- */
 
-.wind-table {
+.meteo-station-table {
   background: var(--meteo-surface, #ffffff);
   border: 1px solid var(--meteo-border, #dbe2e9);
   border-radius: var(--meteo-radius, 12px);
@@ -720,7 +720,7 @@
   box-shadow: var(--meteo-shadow, 0 1px 2px rgb(23 35 46 / 0.06), 0 8px 24px rgb(23 35 46 / 0.05));
 }
 
-.wind-table-row {
+.meteo-station-table-row {
   display: grid;
   grid-template-columns: minmax(140px, 1.7fr) 0.9fr 0.7fr 0.7fr 1.2fr 1fr 1.2fr;
   gap: 0.5rem;
@@ -728,63 +728,63 @@
   padding: 0.55rem 0.9rem;
 }
 
-.wind-table-head {
+.meteo-station-table-head {
   background: var(--meteo-surface-raised, #f4f6f9);
   border-bottom: 1px solid var(--meteo-border, #dbe2e9);
 }
 
-.wind-table-body .wind-table-row + .wind-table-row {
+.meteo-station-table-body .meteo-station-table-row + .meteo-station-table-row {
   border-top: 1px solid var(--meteo-grid, #e5eaef);
 }
 
-.wind-table-station {
+.meteo-station-table-station {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
   min-width: 0;
 }
 
-.wind-table-station strong {
+.meteo-station-table-station strong {
   font-weight: 650;
 }
 
-.wind-table-station a {
+.meteo-station-table-station a {
   color: var(--meteo-accent, #0f7490);
   text-decoration: none;
 }
 
-.wind-table-station a:hover {
+.meteo-station-table-station a:hover {
   text-decoration: underline;
 }
 
-.wind-table-station small {
+.meteo-station-table-station small {
   font-size: 0.72rem;
   color: var(--meteo-muted, #62717f);
 }
 
-.wind-table-wind strong {
+.meteo-station-table-wind strong {
   font-size: 1.4rem;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-.wind-table-wind small {
+.meteo-station-table-wind small {
   margin-left: 0.3em;
   font-size: 0.7rem;
   color: var(--meteo-muted, #62717f);
 }
 
-.wind-table-lull,
-.wind-table-gust,
-.wind-table-from,
-.wind-table-temp {
+.meteo-station-table-lull,
+.meteo-station-table-gust,
+.meteo-station-table-from,
+.meteo-station-table-temp {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   font-weight: 600;
 }
 
-.wind-table-updated {
+.meteo-station-table-updated {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -794,30 +794,30 @@
 }
 
 /* Reason words span every data column so the row keeps its geometry. */
-.wind-table-reason {
+.meteo-station-table-reason {
   grid-column: 2 / -1;
   color: var(--meteo-muted, #62717f);
   font-style: italic;
 }
 
 @media (max-width: 560px) {
-  .wind-table-row {
+  .meteo-station-table-row {
     grid-template-columns: minmax(110px, 1.4fr) 0.9fr 0.7fr 0.7fr 1.1fr;
   }
-  .wind-table-temp,
-  .wind-table-updated,
-  .wind-table-head span:nth-child(6),
-  .wind-table-head span:nth-child(7) {
+  .meteo-station-table-temp,
+  .meteo-station-table-updated,
+  .meteo-station-table-head span:nth-child(6),
+  .meteo-station-table-head span:nth-child(7) {
     display: none;
   }
-  .wind-table-reason {
+  .meteo-station-table-reason {
     display: block;
   }
 }
 
 /* ---------- station card ---------- */
 
-.wind-station {
+.meteo-station-card {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
@@ -829,7 +829,7 @@
 }
 
 /* The card supplies the chrome; the instrument inside sheds its own. */
-.wind-station .wind-current {
+.meteo-station-card .meteo-current {
   border: none;
   padding: 0.25rem 0 0;
   background: transparent;
@@ -837,7 +837,7 @@
 }
 
 /* The header is a raised strip across the card's full width. */
-.wind-station-header {
+.meteo-station-card-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -849,29 +849,29 @@
   border-radius: var(--meteo-radius, 12px) var(--meteo-radius, 12px) 0 0;
 }
 
-.wind-station-name {
+.meteo-station-card-name {
   margin: 0;
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
-.wind-station-name a {
+.meteo-station-card-name a {
   color: inherit;
   text-decoration: none;
 }
 
-.wind-station-name a:hover {
+.meteo-station-card-name a:hover {
   color: var(--meteo-accent, #0f7490);
 }
 
-.wind-station-meta {
+.meteo-station-card-meta {
   margin: 0.15rem 0 0;
   font-size: 0.78rem;
   color: var(--meteo-muted, #62717f);
 }
 
-.wind-summary {
+.meteo-summary {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 1.4rem;
@@ -880,7 +880,7 @@
   border-top: 1px solid var(--meteo-grid, #e5eaef);
 }
 
-.wind-summary-item dd {
+.meteo-summary-item dd {
   margin: 0.1rem 0 0;
   font-size: 0.88rem;
   font-weight: 700;

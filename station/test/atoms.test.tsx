@@ -16,8 +16,8 @@ import {
   StationFeedProvider,
   Temperature,
   UpdatedAt,
-  defaultStrings,
 } from "../react/index.js";
+import { defaultStrings } from "../index.js";
 import {
   BASE_MS,
   conditionsStation,
@@ -142,7 +142,7 @@ describe("Direction", () => {
     const direction = container.querySelector("span.meteo-direction");
     expect(direction?.textContent).toContain("NW");
     expect(direction?.textContent).toContain("312°");
-    expect(direction?.querySelector("svg.wind-arrow")).not.toBeNull();
+    expect(direction?.querySelector("svg.meteo-wind-arrow")).not.toBeNull();
     expect(direction?.getAttribute("aria-label")).toBe("from northwest, 312 degrees");
   });
 
@@ -154,7 +154,7 @@ describe("Direction", () => {
     const direction = container.querySelector(".meteo-direction");
     expect(direction?.textContent).toBe(defaultStrings.calm);
     expect(direction?.hasAttribute("aria-label")).toBe(false);
-    expect(container.querySelector(".wind-arrow")).toBeNull();
+    expect(container.querySelector(".meteo-wind-arrow")).toBeNull();
   });
 
   it("routes the spoken words through strings: compassSpoken and aria.direction override", () => {

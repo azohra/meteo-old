@@ -42,11 +42,12 @@ async function importDist(entryRelative) {
 }
 
 const core = await importDist("index.js");
-const { CurrentConditions, WindRose, defaultStrings: words } = await importDist("react/index.js");
+const { CurrentConditions, WindRose } = await importDist("react/index.js");
+const words = core.defaultStrings;
 
 /* ---------------- theme tokens, read from the shipped stylesheet --------- */
 
-const stylesCss = await readFile(join(root, "station/react/styles.css"), "utf8");
+const stylesCss = await readFile(join(root, "station/styles.css"), "utf8");
 
 /* Tokens are defined ONCE on :where(.meteo-root) via light-dark(a, b) — both
  * --meteo-* (shared skin) and --wind-* (wind-scoped) prefixes. Each theme
@@ -122,55 +123,55 @@ function darken(hex, keep = 0.72) {
 }
 
 /* Every wind-* class any asset can carry, resolved to concrete colours.
- * Values mirror station/react/styles.css; the colours themselves are never
+ * Values mirror station/styles.css; the colours themselves are never
  * duplicated here — they come from the parsed token blocks above. */
 function styleBlock(t) {
   const bands = [0, 1, 2, 3, 4].map((band) => t[`band-${band}`]);
   const perBand = (selector, property) =>
-    bands.map((color, band) => `${selector}.wind-band-${band}{${property}:${color}}`).join("\n");
+    bands.map((color, band) => `${selector}.meteo-band-${band}{${property}:${color}}`).join("\n");
   return `<style>
 text{font-family:${t.font};font-size:10.5px;fill:${t.muted}}
-.wind-dial-face{fill:${t["surface-raised"]}}
-.wind-dial-bezel-in{stop-color:${t["surface-raised"]};stop-opacity:0}
-.wind-dial-bezel-out{stop-color:${t.ink};stop-opacity:0.1}
-.wind-dial-ring{fill:none;stroke:${t.border};stroke-width:1.5}
-.wind-dial-arc{fill:none;stroke:${t.accent};stroke-width:5.5;stroke-linecap:round}
-${perBand(".wind-dial-arc", "stroke")}
-.wind-dial-tick{stroke:${t.muted};stroke-width:1;opacity:0.55}
-.wind-dial-tick-cardinal{stroke:${t.ink};stroke-width:2;opacity:0.9}
-.wind-dial-letter{font-size:11px;font-weight:600;fill:${t.muted}}
-.wind-needle-blade{fill:${t.accent}}
-.wind-needle-counterweight{fill:${t.accent}}
-.wind-dial-hub{fill:${t["surface-raised"]};stroke:${t.border};stroke-width:1.5}
-.wind-dial-speed{font-size:37px;font-weight:750;fill:${t.ink}}
-.wind-dial-unit{font-size:10px;fill:${t.muted}}
-.wind-grid-line{stroke:${t.grid};stroke-width:1}
-.wind-zone{stroke:none;fill-opacity:0.05}
-${perBand(".wind-zone", "fill")}
-.wind-threshold{stroke-width:1;stroke-dasharray:2 5;opacity:0.7}
-${perBand(".wind-threshold", "stroke")}
-.wind-threshold-label{font-size:9px;font-weight:650}
-${perBand(".wind-threshold-label", "fill")}
-.wind-guide{stroke:${t.grid};stroke-width:1;stroke-dasharray:1 4}
-.wind-band{fill:${t["band-fill"]};stroke:none}
-.wind-mean-segment{fill:none;stroke-width:3.5;stroke-linecap:round}
-${perBand(".wind-mean-segment", "stroke")}
-.wind-row-label{font-size:9px;letter-spacing:0.08em}
-.wind-vane{fill:none;stroke:${t.vane};stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.wind-gap-hatch{stroke:${t.gap};stroke-width:1.25}
-.wind-rose-grid{fill:none;stroke:${t.grid};stroke-width:1}
-.wind-rose-tick{stroke:${t.muted};stroke-width:1;opacity:0.35}
-.wind-rose-letter{font-size:12.5px;font-weight:650;fill:${t.ink}}
-.wind-rose-ring-label{font-size:8.5px;fill:${t.muted}}
-.wind-rose-petal{fill:${t.accent};fill-opacity:0.85;stroke:${darken(t.accent)};stroke-width:1;stroke-linejoin:round}
+.meteo-wind-dial-face{fill:${t["surface-raised"]}}
+.meteo-wind-dial-bezel-in{stop-color:${t["surface-raised"]};stop-opacity:0}
+.meteo-wind-dial-bezel-out{stop-color:${t.ink};stop-opacity:0.1}
+.meteo-wind-dial-ring{fill:none;stroke:${t.border};stroke-width:1.5}
+.meteo-wind-dial-arc{fill:none;stroke:${t.accent};stroke-width:5.5;stroke-linecap:round}
+${perBand(".meteo-wind-dial-arc", "stroke")}
+.meteo-wind-dial-tick{stroke:${t.muted};stroke-width:1;opacity:0.55}
+.meteo-wind-dial-tick-cardinal{stroke:${t.ink};stroke-width:2;opacity:0.9}
+.meteo-wind-dial-letter{font-size:11px;font-weight:600;fill:${t.muted}}
+.meteo-wind-needle-blade{fill:${t.accent}}
+.meteo-wind-needle-counterweight{fill:${t.accent}}
+.meteo-wind-dial-hub{fill:${t["surface-raised"]};stroke:${t.border};stroke-width:1.5}
+.meteo-wind-dial-speed{font-size:37px;font-weight:750;fill:${t.ink}}
+.meteo-wind-dial-unit{font-size:10px;fill:${t.muted}}
+.meteo-grid-line{stroke:${t.grid};stroke-width:1}
+.meteo-wind-zone{stroke:none;fill-opacity:0.05}
+${perBand(".meteo-wind-zone", "fill")}
+.meteo-wind-threshold{stroke-width:1;stroke-dasharray:2 5;opacity:0.7}
+${perBand(".meteo-wind-threshold", "stroke")}
+.meteo-wind-threshold-label{font-size:9px;font-weight:650}
+${perBand(".meteo-wind-threshold-label", "fill")}
+.meteo-wind-guide{stroke:${t.grid};stroke-width:1;stroke-dasharray:1 4}
+.meteo-wind-band{fill:${t["band-fill"]};stroke:none}
+.meteo-wind-mean-segment{fill:none;stroke-width:3.5;stroke-linecap:round}
+${perBand(".meteo-wind-mean-segment", "stroke")}
+.meteo-wind-row-label{font-size:9px;letter-spacing:0.08em}
+.meteo-wind-vane{fill:none;stroke:${t.vane};stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.meteo-wind-gap-hatch{stroke:${t.gap};stroke-width:1.25}
+.meteo-wind-rose-grid{fill:none;stroke:${t.grid};stroke-width:1}
+.meteo-wind-rose-tick{stroke:${t.muted};stroke-width:1;opacity:0.35}
+.meteo-wind-rose-letter{font-size:12.5px;font-weight:650;fill:${t.ink}}
+.meteo-wind-rose-ring-label{font-size:8.5px;fill:${t.muted}}
+.meteo-wind-rose-petal{fill:${t.accent};fill-opacity:0.85;stroke:${darken(t.accent)};stroke-width:1;stroke-linejoin:round}
 ${bands
   .map(
     (color, band) =>
-      `.wind-rose-petal.wind-band-${band}{fill:${color};stroke:${darken(color)}}`,
+      `.meteo-wind-rose-petal.meteo-band-${band}{fill:${color};stroke:${darken(color)}}`,
   )
   .join("\n")}
-.wind-rose-hub{fill:${t.surface};stroke:${t.border};stroke-width:1}
-.wind-rose-dot{fill:${t.muted}}
+.meteo-wind-rose-hub{fill:${t.surface};stroke:${t.border};stroke-width:1}
+.meteo-wind-rose-dot{fill:${t.muted}}
 .hw-card{fill:${t.surface};stroke:${t.border};stroke-width:1}
 .hw-raised{fill:${t["surface-raised"]}}
 .hw-border{stroke:${t.border};stroke-width:1}
@@ -347,7 +348,7 @@ function extractSvg(markup, className, x, y) {
   return `<svg x="${n(x)}" y="${n(y)}"${markup.slice(open + 4, close)}`;
 }
 
-/* A card with a raised, top-rounded header band — the .wind-station chrome,
+/* A card with a raised, top-rounded header band — the .meteo-station-card chrome,
  * in SVG. */
 function cardChrome(width, height, headerBottom, radius = 14) {
   const inner = radius - 1;
@@ -389,32 +390,32 @@ function chartSvg({ points, periodMinutes, thresholds, width, x, y, idPrefix }) 
     const [lower, upper] = [cuts[index], cuts[index + 1]];
     const band = core.speedBand((lower + upper) / 2, thresholds);
     parts.push(
-      `<rect class="wind-zone wind-band-${band}" x="${n(frame.left)}" y="${n(scales.yAt(upper))}" width="${n(frame.right - frame.left)}" height="${n(scales.yAt(lower) - scales.yAt(upper))}"/>`,
+      `<rect class="meteo-wind-zone meteo-band-${band}" x="${n(frame.left)}" y="${n(scales.yAt(upper))}" width="${n(frame.right - frame.left)}" height="${n(scales.yAt(lower) - scales.yAt(upper))}"/>`,
     );
   }
   for (const fraction of [0, 0.5, 1]) {
     const gridY = frame.plotBottom - fraction * (frame.plotBottom - frame.plotTop);
     parts.push(
-      `<line class="wind-grid-line" x1="${n(frame.left)}" y1="${n(gridY)}" x2="${n(frame.right)}" y2="${n(gridY)}"/>`,
-      text(frame.left - 6, gridY + 5, "wind-grid-label", shownKmh(scales.scaleMax * fraction), "end"),
+      `<line class="meteo-grid-line" x1="${n(frame.left)}" y1="${n(gridY)}" x2="${n(frame.right)}" y2="${n(gridY)}"/>`,
+      text(frame.left - 6, gridY + 5, "meteo-grid-label", shownKmh(scales.scaleMax * fraction), "end"),
     );
   }
   for (const bound of thresholds.filter((b) => b > 0 && b <= scales.scaleMax)) {
     const band = core.speedBand(bound, thresholds);
     parts.push(
-      `<line class="wind-threshold wind-band-${band}" x1="${n(frame.left)}" y1="${n(scales.yAt(bound))}" x2="${n(frame.right)}" y2="${n(scales.yAt(bound))}"/>`,
-      text(frame.right - 3, scales.yAt(bound) - 3, `wind-threshold-label wind-band-${band}`, shownKmh(bound), "end"),
+      `<line class="meteo-wind-threshold meteo-band-${band}" x1="${n(frame.left)}" y1="${n(scales.yAt(bound))}" x2="${n(frame.right)}" y2="${n(scales.yAt(bound))}"/>`,
+      text(frame.right - 3, scales.yAt(bound) - 3, `meteo-wind-threshold-label meteo-band-${band}`, shownKmh(bound), "end"),
     );
   }
   for (const vane of vanes) {
     parts.push(
-      `<line class="wind-guide" x1="${n(scales.xAtMs(vane.midMs))}" y1="${n(frame.plotTop)}" x2="${n(scales.xAtMs(vane.midMs))}" y2="${n(frame.vaneRow - 9)}"/>`,
+      `<line class="meteo-wind-guide" x1="${n(scales.xAtMs(vane.midMs))}" y1="${n(frame.plotTop)}" x2="${n(scales.xAtMs(vane.midMs))}" y2="${n(frame.vaneRow - 9)}"/>`,
     );
   }
   const gaps = core.historyGaps({ periodMinutes, points });
   if (gaps.length > 0) {
     parts.push(
-      `<defs><pattern id="${idPrefix}-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="wind-gap-hatch" x1="0" y1="0" x2="0" y2="6"/></pattern></defs>`,
+      `<defs><pattern id="${idPrefix}-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="meteo-wind-gap-hatch" x1="0" y1="0" x2="0" y2="6"/></pattern></defs>`,
       ...gaps.map(
         ([startMs, endMs]) =>
           `<rect fill="url(#${idPrefix}-hatch)" x="${n(scales.xAtMs(startMs))}" y="${n(frame.plotTop)}" width="${n(scales.xAtMs(endMs) - scales.xAtMs(startMs))}" height="${n(frame.plotBottom - frame.plotTop)}"/>`,
@@ -422,25 +423,25 @@ function chartSvg({ points, periodMinutes, thresholds, width, x, y, idPrefix }) 
     );
   }
   const band = core.bandPoints(points, scales);
-  if (band != null) parts.push(`<polygon class="wind-band" points="${band}"/>`);
+  if (band != null) parts.push(`<polygon class="meteo-wind-band" points="${band}"/>`);
   for (let index = 1; index < points.length; index += 1) {
     const [previous, point] = [points[index - 1], points[index]];
     const segmentBand = core.speedBand((previous.averageMps + point.averageMps) / 2, thresholds);
     parts.push(
-      `<line class="wind-mean-segment wind-band-${segmentBand}" x1="${n(scales.xAt(previous.observedAt))}" y1="${n(scales.yAt(previous.averageMps))}" x2="${n(scales.xAt(point.observedAt))}" y2="${n(scales.yAt(point.averageMps))}"/>`,
+      `<line class="meteo-wind-mean-segment meteo-band-${segmentBand}" x1="${n(scales.xAt(previous.observedAt))}" y1="${n(scales.yAt(previous.averageMps))}" x2="${n(scales.xAt(point.observedAt))}" y2="${n(scales.yAt(point.averageMps))}"/>`,
     );
   }
-  parts.push(text(frame.left - 8, frame.vaneRow + 4, "wind-row-label", words.toLabel, "end"));
+  parts.push(text(frame.left - 8, frame.vaneRow + 4, "meteo-wind-row-label", words.toLabel, "end"));
   for (const vane of vanes) {
     parts.push(
       vane.directionDeg == null
-        ? text(scales.xAtMs(vane.midMs), frame.vaneRow + 4, "wind-vane-calm", "—", "middle")
-        : `<path class="wind-vane" d="${core.vanePath(scales.xAtMs(vane.midMs), frame.vaneRow, vane.directionDeg)}"/>`,
+        ? text(scales.xAtMs(vane.midMs), frame.vaneRow + 4, "meteo-wind-vane-calm", "—", "middle")
+        : `<path class="meteo-wind-vane" d="${core.vanePath(scales.xAtMs(vane.midMs), frame.vaneRow, vane.directionDeg)}"/>`,
     );
   }
   for (const tick of core.vaneTicks(vanes, scales)) {
     const anchor = tick.index === 0 ? "start" : tick.index === 4 ? "end" : "middle";
-    parts.push(text(tick.x, frame.labelRow, "wind-tick", fmtTime(tick.timeMs), anchor));
+    parts.push(text(tick.x, frame.labelRow, "meteo-tick", fmtTime(tick.timeMs), anchor));
   }
   return `<svg x="${n(x)}" y="${n(y)}" width="${frame.width}" height="${frame.height}" viewBox="0 0 ${frame.width} ${frame.height}">${parts.join("")}</svg>`;
 }
@@ -474,9 +475,9 @@ function heroSvg(theme) {
     `<rect class="hw-pill" x="790" y="15" width="66" height="26" rx="13"/>` +
     `<circle class="hw-pill-dot" cx="806" cy="28" r="4"/>` +
     text(818, 32, "hw-pill-text", words.freshness[status]) +
-    `<line class="wind-grid-line" x1="326" y1="82" x2="326" y2="322"/>` +
+    `<line class="meteo-grid-line" x1="326" y1="82" x2="326" y2="322"/>` +
     flank(43, 174, words.lullLabel, shownKmh(READING.lullMps)) +
-    extractSvg(renderDial(), "wind-dial", 71, 102) +
+    extractSvg(renderDial(), "meteo-wind-dial", 71, 102) +
     flank(259, 174, words.gustLabel, shownKmh(READING.gustMps)) +
     directionRow(151, 294, READING.directionDeg) +
     `<text x="386" y="104"><tspan class="hw-accent-strong">${fmtTime(startMs)} – ${fmtTime(NOW_MS)}</tspan><tspan class="hw-meta"> · lull–gust band · vanes point downwind</tspan></text>` +
@@ -513,7 +514,7 @@ function galleryDialSvg() {
   const body =
     `<rect class="hw-card" x="6.5" y="6.5" width="267" height="219" rx="12"/>` +
     flank(32, 88, words.lullLabel, shownKmh(READING.lullMps)) +
-    extractSvg(renderDial(), "wind-dial", 60, 18) +
+    extractSvg(renderDial(), "meteo-wind-dial", 60, 18) +
     flank(248, 88, words.gustLabel, shownKmh(READING.gustMps)) +
     directionRow(140, 206, READING.directionDeg);
   return svgDocument(280, 232, "light", `CurrentConditions at ${STATION.name}`, body);
@@ -539,7 +540,7 @@ function galleryRoseSvg() {
   const calmPercent = Math.round(core.windRose(ROSE_POINTS).calmFraction * 100);
   const body =
     `<rect class="hw-card" x="6.5" y="6.5" width="267" height="223" rx="12"/>` +
-    extractSvg(markup, "wind-rose-svg", 45, 12) +
+    extractSvg(markup, "meteo-wind-rose-svg", 45, 12) +
     text(140, 218, "hw-dim", words.percentCalm(calmPercent), "middle");
   return svgDocument(280, 236, "light", "WindRose direction distribution", body);
 }
@@ -563,9 +564,9 @@ function galleryTableSvg() {
     text(columns.gust, 25, "hw-micro", words.table.gust.toUpperCase(), "end") +
     text(columns.from, 25, "hw-micro", words.table.from.toUpperCase()) +
     row(57, "Launch Ridge", shownKmh(READING.averageMps), shownKmh(READING.gustMps), READING.directionDeg) +
-    `<line class="wind-grid-line" x1="7" y1="70.5" x2="273" y2="70.5"/>` +
+    `<line class="meteo-grid-line" x1="7" y1="70.5" x2="273" y2="70.5"/>` +
     row(95, "Valley Floor", 9, 13, 135) +
-    `<line class="wind-grid-line" x1="7" y1="108.5" x2="273" y2="108.5"/>` +
+    `<line class="meteo-grid-line" x1="7" y1="108.5" x2="273" y2="108.5"/>` +
     text(columns.station, 133, "hw-table-strong", "Ridge East") +
     text(110, 133, "hw-italic", words.reasons.timeout);
   return svgDocument(280, 154, "light", "StationTable across three stations", body);

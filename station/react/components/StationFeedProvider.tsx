@@ -6,7 +6,7 @@
  *
  * The provider is a DEFAULT, never a requirement: every component still
  * works fully via explicit props with no provider anywhere, and an explicit
- * prop always overrides the context (the same `??` discipline WindStation's
+ * prop always overrides the context (the same `??` discipline StationCard's
  * subcomponents use, promoted package-wide).
  *
  * Station resolution for per-station components inside a provider, in order:
@@ -18,10 +18,14 @@
  * these words rather than rendering a mystery blank. */
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
+import {
+  requireResolved as requireResolvedWith,
+  resolveStation as resolveFeedStation,
+} from "../../index.js";
 import type { SpeedUnit, Station, StationFeed } from "../../index.js";
-import { localeFormatTime } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides } from "../lib/strings.js";
-import type { SpeedThresholds } from "../lib/thresholds.js";
+import { localeFormatTime } from "../../index.js";
+import type { FormatTime, StationStringOverrides } from "../../index.js";
+import type { SpeedThresholds } from "../../index.js";
 
 export type StationFeedContextValue = {
   feed: StationFeed | null;
@@ -73,31 +77,17 @@ export function useStationFeedContext(): StationFeedContextValue | null {
 }
 
 /* The documented resolution order (stationId → primaryStationId →
- * stations[0]) over a context that may be absent. */
+ * stations[0]) — the shared display rule, applied to a react context that
+ * may be absent. */
 export function resolveStation(
   context: StationFeedContextValue | null,
   stationId: string | undefined,
 ): Station | null {
-  const feed = context?.feed;
-  if (feed == null) return null;
-  if (stationId != null) {
-    return feed.stations.find((station) => station.id === stationId) ?? null;
-  }
-  if (feed.primaryStationId != null) {
-    const primary = feed.stations.find((station) => station.id === feed.primaryStationId);
-    if (primary != null) return primary;
-  }
-  return feed.stations[0] ?? null;
+  return resolveFeedStation(context?.feed ?? null, stationId);
 }
 
-/* Required-data guard: absence of a station (or a stations list) is a wiring
- * mistake, and silence would render a mystery blank. Say so. */
+/* The shared required-data guard, with this binding's ambient hint: the
+ * error names the provider the reader can actually render. */
 export function requireResolved<T>(component: string, what: string, value: T | null | undefined): T {
-  if (value == null) {
-    throw new Error(
-      `<${component}> resolved no ${what} — pass the prop explicitly or render ` +
-        "inside <StationFeedProvider> with a feed.",
-    );
-  }
-  return value;
+  return requireResolvedWith(component, what, value, "render inside <StationFeedProvider> with a feed");
 }

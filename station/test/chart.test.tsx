@@ -4,7 +4,8 @@
  * getBoundingClientRect (jsdom reports zero) so a click lands at a chart x. */
 import { fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { WindHistoryChart, defaultStrings } from "../react/index.js";
+import { WindHistoryChart } from "../react/index.js";
+import { defaultStrings } from "../index.js";
 import { MINUTE_MS, iso, makePoints, okStation } from "./fixtures.js";
 
 const isoTime = (date: Date) => date.toISOString();
@@ -37,31 +38,31 @@ afterEach(() => {
 describe("WindHistoryChart", () => {
   it("draws band, single mean polyline, vanes, and ticks without thresholds", () => {
     const { container } = render(<WindHistoryChart station={okStation()} />);
-    expect(container.querySelector("polygon.wind-band")).not.toBeNull();
-    expect(container.querySelector("polyline.wind-mean")).not.toBeNull();
-    expect(container.querySelector(".wind-mean-segment")).toBeNull();
-    expect(container.querySelector(".wind-zone")).toBeNull();
-    expect(container.querySelectorAll(".wind-vane").length).toBeGreaterThan(0);
-    expect(container.querySelectorAll(".wind-tick").length).toBe(5);
+    expect(container.querySelector("polygon.meteo-wind-band")).not.toBeNull();
+    expect(container.querySelector("polyline.meteo-wind-mean")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-mean-segment")).toBeNull();
+    expect(container.querySelector(".meteo-wind-zone")).toBeNull();
+    expect(container.querySelectorAll(".meteo-wind-vane").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".meteo-tick").length).toBe(5);
   });
 
   it("grades the mean per segment, tints band zones, and labels threshold guides", () => {
     const { container } = render(
       <WindHistoryChart station={okStation()} thresholds={{ unit: "kmh", values: [12, 20] }} />,
     );
-    expect(container.querySelector("polyline.wind-mean")).toBeNull();
+    expect(container.querySelector("polyline.meteo-wind-mean")).toBeNull();
     /* 12 points → 11 segments, spanning bands 0..2 for averages 10..21. */
-    expect(container.querySelectorAll(".wind-mean-segment").length).toBe(11);
-    expect(container.querySelector(".wind-mean-segment.wind-band-0")).not.toBeNull();
-    expect(container.querySelector(".wind-mean-segment.wind-band-2")).not.toBeNull();
-    expect(container.querySelectorAll(".wind-threshold").length).toBe(2);
+    expect(container.querySelectorAll(".meteo-wind-mean-segment").length).toBe(11);
+    expect(container.querySelector(".meteo-wind-mean-segment.meteo-band-0")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-mean-segment.meteo-band-2")).not.toBeNull();
+    expect(container.querySelectorAll(".meteo-wind-threshold").length).toBe(2);
     /* Guides wear the band they open and carry a right-edge km/h label. */
-    expect(container.querySelector(".wind-threshold.wind-band-1")).not.toBeNull();
-    expect(container.querySelector(".wind-threshold-label.wind-band-2")?.textContent).toBe("20");
+    expect(container.querySelector(".meteo-wind-threshold.meteo-band-1")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-threshold-label.meteo-band-2")?.textContent).toBe("20");
     /* Zones: under-first-threshold, 12–20, and 20–scaleMax. */
-    expect(container.querySelectorAll(".wind-zone").length).toBe(3);
-    expect(container.querySelector(".wind-zone.wind-band-0")).not.toBeNull();
-    expect(container.querySelector(".wind-zone.wind-band-2")).not.toBeNull();
+    expect(container.querySelectorAll(".meteo-wind-zone").length).toBe(3);
+    expect(container.querySelector(".meteo-wind-zone.meteo-band-0")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-zone.meteo-band-2")).not.toBeNull();
   });
 
   it("rounds the axis in the DISPLAY unit and prints declared threshold numbers", () => {
@@ -70,13 +71,13 @@ describe("WindHistoryChart", () => {
     const { container } = render(
       <WindHistoryChart station={okStation()} thresholds={{ unit: "kmh", values: [12, 20] }} unit="knots" />,
     );
-    const gridLabels = Array.from(container.querySelectorAll(".wind-grid-label")).map(
+    const gridLabels = Array.from(container.querySelectorAll(".meteo-grid-label")).map(
       (label) => label.textContent,
     );
     expect(gridLabels).toEqual(["0", "8", "15"]);
     /* Declared in km/h, displayed in knots: the guide label converts the
      * DECLARED number (20 km/h → 11 kn). */
-    expect(container.querySelector(".wind-threshold-label.wind-band-2")?.textContent).toBe("11");
+    expect(container.querySelector(".meteo-wind-threshold-label.meteo-band-2")?.textContent).toBe("11");
 
     /* Declared in the display unit: the label is the consumer's number
      * verbatim, no round-trip through the wire. */
@@ -87,7 +88,7 @@ describe("WindHistoryChart", () => {
         unit="knots"
       />,
     );
-    expect(knotsDeclared.querySelector(".wind-threshold-label.wind-band-1")?.textContent).toBe(
+    expect(knotsDeclared.querySelector(".meteo-wind-threshold-label.meteo-band-1")?.textContent).toBe(
       "7.5",
     );
   });
@@ -102,8 +103,8 @@ describe("WindHistoryChart", () => {
       },
     });
     const { container } = render(<WindHistoryChart station={station} />);
-    expect(container.querySelector("polygon.wind-band")).toBeNull();
-    expect(container.querySelector("polyline.wind-mean")).not.toBeNull();
+    expect(container.querySelector("polygon.meteo-wind-band")).toBeNull();
+    expect(container.querySelector("polyline.meteo-wind-mean")).not.toBeNull();
   });
 
   it("says calm in words and dashes the vane row", () => {
@@ -120,18 +121,18 @@ describe("WindHistoryChart", () => {
       },
     });
     const { container } = render(<WindHistoryChart station={station} />);
-    expect(container.querySelector(".wind-calm-note")?.textContent).toBe(
+    expect(container.querySelector(".meteo-wind-calm-note")?.textContent).toBe(
       defaultStrings.calmHistory,
     );
-    expect(container.querySelectorAll(".wind-vane").length).toBe(0);
-    expect(container.querySelectorAll(".wind-vane-calm").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".meteo-wind-vane").length).toBe(0);
+    expect(container.querySelectorAll(".meteo-wind-vane-calm").length).toBeGreaterThan(0);
   });
 
   it("hatches dropout gaps found against the declared period", () => {
     const points = makePoints(12).filter((_, index) => index < 4 || index > 7);
     const station = okStation({ history: { periodMinutes: 5, points } });
     const { container } = render(<WindHistoryChart station={station} />);
-    expect(container.querySelectorAll("rect.wind-gap").length).toBe(1);
+    expect(container.querySelectorAll("rect.meteo-wind-gap").length).toBe(1);
   });
 
   it("renders nothing when the station declares no history, a note when history is thin", () => {
@@ -144,12 +145,12 @@ describe("WindHistoryChart", () => {
 
     const thin = okStation({ history: { periodMinutes: 5, points: makePoints(1) } });
     const { container: note } = render(<WindHistoryChart station={thin} />);
-    expect(note.querySelector(".wind-chart-na")?.textContent).toBe(defaultStrings.noHistory);
+    expect(note.querySelector(".meteo-wind-chart-na")?.textContent).toBe(defaultStrings.noHistory);
   });
 
   it("labels the readout live region and keeps it quiet only while previewing", () => {
     const { container } = render(<WindHistoryChart station={okStation()} />);
-    const readout = container.querySelector("output.wind-chart-readout");
+    const readout = container.querySelector("output.meteo-wind-chart-readout");
     expect(readout?.getAttribute("aria-label")).toBe(
       defaultStrings.aria.readout(okStation().name),
     );
@@ -162,10 +163,10 @@ describe("WindHistoryChart", () => {
     const { container, rerender } = render(
       <WindHistoryChart formatTime={isoTime} station={okStation()} />,
     );
-    const hit = container.querySelector(".wind-hit") as SVGRectElement;
+    const hit = container.querySelector(".meteo-hit") as SVGRectElement;
     /* Right edge of the plot → the newest sample (averageMps 21). */
     fireEvent.click(hit, { clientX: 354 });
-    const readout = () => container.querySelector(".wind-chart-readout");
+    const readout = () => container.querySelector(".meteo-wind-chart-readout");
     expect(readout()?.querySelector("strong")?.textContent).toBe(isoTime(new Date(BASE_MS)));
     expect(readout()?.textContent).toContain(`${defaultStrings.avgLabel} 21`);
 
@@ -200,8 +201,8 @@ describe("WindHistoryChart", () => {
       },
     });
     const { container } = render(<WindHistoryChart formatTime={isoTime} station={calmish} />);
-    fireEvent.click(container.querySelector(".wind-hit") as SVGRectElement, { clientX: 354 });
-    expect(container.querySelector(".wind-chart-readout")?.textContent).toContain(
+    fireEvent.click(container.querySelector(".meteo-hit") as SVGRectElement, { clientX: 354 });
+    expect(container.querySelector(".meteo-wind-chart-readout")?.textContent).toContain(
       defaultStrings.calm,
     );
 
@@ -215,8 +216,8 @@ describe("WindHistoryChart", () => {
     const { container: dashed } = render(
       <WindHistoryChart formatTime={isoTime} station={vaneless} />,
     );
-    fireEvent.click(dashed.querySelector(".wind-hit") as SVGRectElement, { clientX: 354 });
-    const text = dashed.querySelector(".wind-chart-readout")?.textContent ?? "";
+    fireEvent.click(dashed.querySelector(".meteo-hit") as SVGRectElement, { clientX: 354 });
+    const text = dashed.querySelector(".meteo-wind-chart-readout")?.textContent ?? "";
     expect(text).not.toContain(defaultStrings.calm);
     expect(text.trim().endsWith("—")).toBe(true);
   });
@@ -224,11 +225,11 @@ describe("WindHistoryChart", () => {
   it("honours an explicit plotHeight without forking the frame's row math", () => {
     const { container: standard } = render(<WindHistoryChart station={okStation()} />);
     /* Core narrow frame: plot 76, top 10, footer 64. */
-    expect(standard.querySelector(".wind-chart-svg")?.getAttribute("height")).toBe("150");
+    expect(standard.querySelector(".meteo-wind-chart-svg")?.getAttribute("height")).toBe("150");
 
     const { container: tall } = render(
       <WindHistoryChart plotHeight={160} station={okStation()} />,
     );
-    expect(tall.querySelector(".wind-chart-svg")?.getAttribute("height")).toBe("234");
+    expect(tall.querySelector(".meteo-wind-chart-svg")?.getAttribute("height")).toBe("234");
   });
 });

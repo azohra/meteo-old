@@ -4,7 +4,8 @@
  * mock getBoundingClientRect exactly as the wind chart tests do. */
 import { fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { TrendChart, defaultStrings } from "../react/index.js";
+import { TrendChart } from "../react/index.js";
+import { defaultStrings } from "../index.js";
 import { makePoints, okStation } from "./fixtures.js";
 
 const isoTime = (date: Date) => date.toISOString();
@@ -45,11 +46,11 @@ describe("TrendChart", () => {
      * line mid-plot instead of zooming it into drama. */
     const { container } = render(<TrendChart series="temperature" station={okStation()} />);
     expect(container.querySelectorAll("polyline.meteo-trend-line").length).toBe(1);
-    const gridLabels = Array.from(container.querySelectorAll(".wind-grid-label")).map(
+    const gridLabels = Array.from(container.querySelectorAll(".meteo-grid-label")).map(
       (label) => label.textContent,
     );
     expect(gridLabels).toEqual(["11", "12", "13"]);
-    expect(container.querySelectorAll(".wind-tick").length).toBe(5);
+    expect(container.querySelectorAll(".meteo-tick").length).toBe(5);
     expect(container.querySelector(".meteo-trend-svg")?.getAttribute("aria-label")).toBe(
       defaultStrings.aria.trend(okStation().name, defaultStrings.trendTemperature),
     );
@@ -59,7 +60,7 @@ describe("TrendChart", () => {
     /* Data 1009–1013 → axis 1007–1015, so the drift reads as a drift, not a
      * cliff pinned to the plot edges. */
     const { container } = render(<TrendChart series="pressure" station={withPressure()} />);
-    const gridLabels = Array.from(container.querySelectorAll(".wind-grid-label")).map(
+    const gridLabels = Array.from(container.querySelectorAll(".meteo-grid-label")).map(
       (label) => label.textContent,
     );
     expect(gridLabels).toEqual(["1007", "1011", "1015"]);
@@ -123,7 +124,7 @@ describe("TrendChart", () => {
     expect(readout()?.textContent).toContain(defaultStrings.inspectHint);
 
     /* Right edge → the newest sample: 1013.0 hPa. */
-    fireEvent.click(container.querySelector(".wind-hit") as SVGRectElement, { clientX: 354 });
+    fireEvent.click(container.querySelector(".meteo-hit") as SVGRectElement, { clientX: 354 });
     const newest = station.history?.points[11];
     expect(readout()?.querySelector("strong")?.textContent).toBe(
       isoTime(new Date(newest?.observedAt as string)),
@@ -133,7 +134,7 @@ describe("TrendChart", () => {
     );
 
     /* Clicking the same moment unpins. */
-    fireEvent.click(container.querySelector(".wind-hit") as SVGRectElement, { clientX: 354 });
+    fireEvent.click(container.querySelector(".meteo-hit") as SVGRectElement, { clientX: 354 });
     expect(readout()?.textContent).toContain(defaultStrings.inspectHint);
   });
 });

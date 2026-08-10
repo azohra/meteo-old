@@ -10,9 +10,9 @@ import {
   StationStrip,
   WindHistoryChart,
   WindRose,
-  WindStation,
-  defaultStrings,
+  StationCard,
 } from "../react/index.js";
+import { defaultStrings } from "../index.js";
 import {
   conditionsFixture,
   conditionsStation,
@@ -29,16 +29,16 @@ describe("CurrentConditions", () => {
     const { container } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={okStation()} />,
     );
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("18");
-    expect(container.querySelector(".wind-needle")).not.toBeNull();
-    expect(container.querySelector(".wind-needle-blade")).not.toBeNull();
-    expect(container.querySelector(".wind-needle-counterweight")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("18");
+    expect(container.querySelector(".meteo-wind-needle")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-needle-blade")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-needle-counterweight")).not.toBeNull();
     /* Without thresholds the arc wears the neutral accent, no band class. */
-    const arc = container.querySelector(".wind-dial-arc");
+    const arc = container.querySelector(".meteo-wind-dial-arc");
     expect(arc).not.toBeNull();
-    expect(arc?.getAttribute("class")).toBe("wind-dial-arc");
-    expect(container.querySelector(".wind-current-direction")?.textContent).toContain("NW");
-    expect(container.querySelector(".wind-current-direction")?.textContent).toContain("312°");
+    expect(arc?.getAttribute("class")).toBe("meteo-wind-dial-arc");
+    expect(container.querySelector(".meteo-current-direction")?.textContent).toContain("NW");
+    expect(container.querySelector(".meteo-current-direction")?.textContent).toContain("312°");
   });
 
   it("grades the speed arc by the current reading's band when thresholds are given", () => {
@@ -51,7 +51,7 @@ describe("CurrentConditions", () => {
       />,
     );
     /* 18.4 km/h-equivalent against [12, 20] km/h-equivalent → band 1. */
-    expect(container.querySelector(".wind-dial-arc.wind-band-1")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-arc.meteo-band-1")).not.toBeNull();
   });
 
   it("renders calm in words with no needle and the measured speed still shown", () => {
@@ -61,10 +61,10 @@ describe("CurrentConditions", () => {
     const { container } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={station} />,
     );
-    expect(container.querySelector(".wind-needle")).toBeNull();
-    expect(container.querySelector(".wind-dial-arc")).toBeNull();
-    expect(container.querySelector(".wind-current-direction")?.textContent).toBe(defaultStrings.calm);
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("0");
+    expect(container.querySelector(".meteo-wind-needle")).toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-arc")).toBeNull();
+    expect(container.querySelector(".meteo-current-direction")?.textContent).toBe(defaultStrings.calm);
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("0");
   });
 
   it("treats a sub-0.5 m/s reading as calm even when the vane reports a bearing", () => {
@@ -74,9 +74,9 @@ describe("CurrentConditions", () => {
     const { container } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={station} />,
     );
-    expect(container.querySelector(".wind-needle")).toBeNull();
-    expect(container.querySelector(".wind-current-direction")?.textContent).toBe(defaultStrings.calm);
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("1");
+    expect(container.querySelector(".meteo-wind-needle")).toBeNull();
+    expect(container.querySelector(".meteo-current-direction")?.textContent).toBe(defaultStrings.calm);
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("1");
   });
 
   it("dashes the direction for a blowing reading with a dead vane", () => {
@@ -86,16 +86,16 @@ describe("CurrentConditions", () => {
     const { container } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={station} />,
     );
-    expect(container.querySelector(".wind-needle")).toBeNull();
-    expect(container.querySelector(".wind-current-direction")?.textContent).toBe("—");
+    expect(container.querySelector(".meteo-wind-needle")).toBeNull();
+    expect(container.querySelector(".meteo-current-direction")?.textContent).toBe("—");
   });
 
   it("renders the unavailable arm: greyed dial and reason words", () => {
     const { container } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={downStation()} />,
     );
-    expect(container.querySelector(".wind-dial-unavailable")).not.toBeNull();
-    expect(container.querySelector(".wind-current-direction")?.textContent).toBe(
+    expect(container.querySelector(".meteo-wind-dial-unavailable")).not.toBeNull();
+    expect(container.querySelector(".meteo-current-direction")?.textContent).toBe(
       defaultStrings.reasons.upstream_error,
     );
   });
@@ -107,7 +107,7 @@ describe("CurrentConditions", () => {
     const { container: without } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={noThermometer} />,
     );
-    expect(without.querySelector(".wind-current-temp")).toBeNull();
+    expect(without.querySelector(".meteo-current-temp")).toBeNull();
 
     const darkSensor = okStation({
       reading: { ...okStation().reading, temperatureC: null, windChillC: null },
@@ -115,7 +115,7 @@ describe("CurrentConditions", () => {
     const { container: dashed } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={darkSensor} />,
     );
-    expect(dashed.querySelector(".wind-current-temp")?.textContent).toBe("—");
+    expect(dashed.querySelector(".meteo-current-temp")?.textContent).toBe("—");
   });
 
   it("rounds the dial scale up to a nice step in the DISPLAY unit", () => {
@@ -129,13 +129,13 @@ describe("CurrentConditions", () => {
     const { container: knots } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={strong} unit="knots" />,
     );
-    expect(knots.querySelector(".wind-dial-arc")?.getAttribute("d")).toBe(
+    expect(knots.querySelector(".meteo-wind-dial-arc")?.getAttribute("d")).toBe(
       "M 80.0 10.0 A 70 70 0 1 1 11.2 93.1",
     );
     const { container: kmh } = render(
       <CurrentConditions receivedAtMs={NOW_MS} servedAt={feedFixture().servedAt} station={strong} unit="kmh" />,
     );
-    expect(kmh.querySelector(".wind-dial-arc")?.getAttribute("d")).toBe(
+    expect(kmh.querySelector(".meteo-wind-dial-arc")?.getAttribute("d")).toBe(
       "M 80.0 10.0 A 70 70 0 1 1 13.4 58.4",
     );
   });
@@ -160,8 +160,8 @@ describe("CurrentConditions", () => {
 describe("WindRose", () => {
   it("draws no judgment ring without favorableDirections", () => {
     const { container } = render(<WindRose points={makePoints(12)} />);
-    expect(container.querySelector(".wind-rose-ring-favorable")).toBeNull();
-    expect(container.querySelector(".wind-rose-ring-unfavorable")).toBeNull();
+    expect(container.querySelector(".meteo-wind-rose-ring-favorable")).toBeNull();
+    expect(container.querySelector(".meteo-wind-rose-ring-unfavorable")).toBeNull();
   });
 
   it("rings favorable sectors over an unfavorable remainder and speaks them", () => {
@@ -172,15 +172,15 @@ describe("WindRose", () => {
       />,
     );
     /* Unfavorable is the full circle; the favorable arc paints over it. */
-    expect(container.querySelector("circle.wind-rose-ring-unfavorable")).not.toBeNull();
-    const arcs = container.querySelectorAll("path.wind-rose-ring-favorable");
+    expect(container.querySelector("circle.meteo-wind-rose-ring-unfavorable")).not.toBeNull();
+    const arcs = container.querySelectorAll("path.meteo-wind-rose-ring-favorable");
     expect(arcs.length).toBe(1);
     /* An 80° span: small-arc flag, clockwise sweep. */
     expect(arcs[0]?.getAttribute("d")).toContain("A 75 75 0 0 1");
     /* Petals stay distribution-coloured — the ring never grades them. */
-    expect(container.querySelector(".wind-rose-petal[class*='wind-band-']")).toBeNull();
+    expect(container.querySelector(".meteo-wind-rose-petal[class*='meteo-band-']")).toBeNull();
     /* The label names the sectors for a screen reader. */
-    expect(container.querySelector(".wind-rose-svg")?.getAttribute("aria-label")).toContain(
+    expect(container.querySelector(".meteo-wind-rose-svg")?.getAttribute("aria-label")).toContain(
       defaultStrings.aria.roseFavorable("260°–340°"),
     );
   });
@@ -195,11 +195,11 @@ describe("WindRose", () => {
         points={makePoints(12)}
       />,
     );
-    const flags = Array.from(container.querySelectorAll("path.wind-rose-ring-favorable")).map(
+    const flags = Array.from(container.querySelectorAll("path.meteo-wind-rose-ring-favorable")).map(
       (arc) => arc.getAttribute("d")?.match(/A 75 75 0 (\d) 1/)?.[1],
     );
     expect(flags).toEqual(["0", "1"]);
-    expect(container.querySelector(".wind-rose-svg")?.getAttribute("aria-label")).toContain(
+    expect(container.querySelector(".meteo-wind-rose-svg")?.getAttribute("aria-label")).toContain(
       defaultStrings.aria.roseFavorable("300°–40°, 90°–350°"),
     );
   });
@@ -209,15 +209,15 @@ describe("WindRose", () => {
       index < 6 ? { ...point, averageMps: 0, gustMps: 0, lullMps: 0, directionDeg: null } : point,
     );
     const { container } = render(<WindRose points={points} thresholds={{ unit: "kmh", values: [12, 20] }} />);
-    const petals = container.querySelectorAll(".wind-rose-petal");
+    const petals = container.querySelectorAll(".meteo-wind-rose-petal");
     expect(petals.length).toBeGreaterThan(0);
-    expect(container.querySelector(".wind-rose-petal[class*='wind-band-']")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-rose-petal[class*='meteo-band-']")).not.toBeNull();
     /* The calm share is a caption beside the dial, not hub fine print. */
-    const calm = container.querySelector(".wind-rose-calm");
+    const calm = container.querySelector(".meteo-wind-rose-calm");
     expect(calm?.tagName).toBe("P");
     expect(calm?.textContent).toBe(defaultStrings.percentCalm(50));
     /* The outer grid ring is named for the busiest sector's share. */
-    expect(container.querySelector(".wind-rose-ring-label")?.textContent).toMatch(/^\d+%$/);
+    expect(container.querySelector(".meteo-wind-rose-ring-label")?.textContent).toMatch(/^\d+%$/);
   });
 });
 
@@ -231,11 +231,11 @@ describe("StationTable", () => {
       <StationTable receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} />,
     );
     expect(container.querySelectorAll("[role='row']").length).toBe(3);
-    expect(container.querySelector(".wind-table-gust")?.textContent).toBe("—");
-    expect(container.querySelector(".wind-table-reason")?.textContent).toBe(
+    expect(container.querySelector(".meteo-station-table-gust")?.textContent).toBe("—");
+    expect(container.querySelector(".meteo-station-table-reason")?.textContent).toBe(
       defaultStrings.reasons.upstream_error,
     );
-    expect(container.querySelector(".wind-table-temp")?.textContent).toContain("14.2");
+    expect(container.querySelector(".meteo-station-table-temp")?.textContent).toContain("14.2");
   });
 
   it("says calm below the WMO threshold and keeps the dash for a dead vane", () => {
@@ -250,7 +250,7 @@ describe("StationTable", () => {
     const { container } = render(
       <StationTable receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} />,
     );
-    const cells = container.querySelectorAll(".wind-table-from");
+    const cells = container.querySelectorAll(".meteo-station-table-from");
     expect(cells[0]?.textContent).toBe(defaultStrings.calm);
     expect(cells[1]?.textContent).toBe("—");
   });
@@ -261,10 +261,10 @@ describe("StationTable", () => {
     const { container } = render(
       <StationTable receivedAtMs={NOW_MS} servedAt={feed.servedAt} stations={feed.stations} unit="knots" />,
     );
-    expect(container.querySelector(".wind-table-wind strong")?.textContent).toBe("10");
-    expect(container.querySelector(".wind-table-wind small")?.textContent).toBe("kn");
-    expect(container.querySelector(".wind-table-gust")?.textContent).toBe("13");
-    expect(container.querySelector(".wind-table-lull")?.textContent).toBe("6");
+    expect(container.querySelector(".meteo-station-table-wind strong")?.textContent).toBe("10");
+    expect(container.querySelector(".meteo-station-table-wind small")?.textContent).toBe("kn");
+    expect(container.querySelector(".meteo-station-table-gust")?.textContent).toBe("13");
+    expect(container.querySelector(".meteo-station-table-lull")?.textContent).toBe("6");
   });
 
   it("scales row freshness to each station's cadence", () => {
@@ -291,7 +291,7 @@ describe("StationTable", () => {
         stations={feed.stations}
       />,
     );
-    const subLabels = container.querySelectorAll(".wind-table-station small");
+    const subLabels = container.querySelectorAll(".meteo-station-table-station small");
     expect(subLabels[0]?.textContent).toBe(`past ${okStation().samplingWindowSeconds} s`);
     expect(subLabels[1]?.textContent).toBe(downStation().sourceLabel);
   });
@@ -511,66 +511,66 @@ describe("AirMatrix", () => {
   });
 });
 
-describe("WindStation", () => {
+describe("StationCard", () => {
   it("childless composes header, instrument, chart, and summary strip", () => {
     const feed = feedFixture();
     const { container } = render(
-      <WindStation receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()} />,
+      <StationCard receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()} />,
     );
-    expect(container.querySelector(".wind-station-name")?.textContent).toContain("Test Station");
-    expect(container.querySelector(".wind-dial")).not.toBeNull();
-    expect(container.querySelector(".wind-summary")).not.toBeNull();
-    const summaryText = container.querySelector(".wind-summary")?.textContent ?? "";
+    expect(container.querySelector(".meteo-station-card-name")?.textContent).toContain("Test Station");
+    expect(container.querySelector(".meteo-wind-dial")).not.toBeNull();
+    expect(container.querySelector(".meteo-summary")).not.toBeNull();
+    const summaryText = container.querySelector(".meteo-summary")?.textContent ?? "";
     expect(summaryText).toContain(defaultStrings.windRunLabel);
   });
 
   it("threads thresholds through to the dial's speed arc", () => {
     const feed = feedFixture();
     const { container } = render(
-      <WindStation
+      <StationCard
         receivedAtMs={NOW_MS}
         servedAt={feed.servedAt}
         station={okStation()}
         thresholds={{ unit: "kmh", values: [12, 20] }}
       />,
     );
-    expect(container.querySelector(".wind-dial-arc.wind-band-1")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-arc.meteo-band-1")).not.toBeNull();
   });
 
   it("with children renders only the asked-for pieces, context-fed", () => {
     const feed = feedFixture();
     const { container } = render(
-      <WindStation receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()}>
-        <WindStation.Chart />
-        <WindStation.Summary />
-      </WindStation>,
+      <StationCard receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()}>
+        <StationCard.Chart />
+        <StationCard.Summary />
+      </StationCard>,
     );
     /* No header, no instrument — the consumer did not ask for them. */
-    expect(container.querySelector(".wind-station-name")).toBeNull();
-    expect(container.querySelector(".wind-dial")).toBeNull();
-    expect(container.querySelector(".wind-chart")).not.toBeNull();
-    expect(container.querySelector(".wind-summary")).not.toBeNull();
+    expect(container.querySelector(".meteo-station-card-name")).toBeNull();
+    expect(container.querySelector(".meteo-wind-dial")).toBeNull();
+    expect(container.querySelector(".meteo-wind-chart")).not.toBeNull();
+    expect(container.querySelector(".meteo-summary")).not.toBeNull();
     /* The card wrapper still carries the station's status. */
-    expect(container.querySelector(".wind-station")?.getAttribute("data-status")).toBe("ok");
+    expect(container.querySelector(".meteo-station-card")?.getAttribute("data-status")).toBe("ok");
   });
 
   it("lets a subcomponent's explicit props override the provider's context", () => {
     const feed = feedFixture();
     const { container } = render(
-      <WindStation receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()}>
-        <WindStation.Chart thresholds={{ unit: "kmh", values: [12, 20] }} />
-      </WindStation>,
+      <StationCard receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()}>
+        <StationCard.Chart thresholds={{ unit: "kmh", values: [12, 20] }} />
+      </StationCard>,
     );
     /* The provider carries no thresholds; the chart's own prop grades it. */
-    expect(container.querySelector(".wind-mean-segment.wind-band-0")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-mean-segment.meteo-band-0")).not.toBeNull();
   });
 
   it("throws a clear error when a subcomponent renders outside the provider", () => {
     /* React logs render-phase throws to console.error; keep the run quiet. */
     const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
-      expect(() => render(<WindStation.Summary />)).toThrow(
-        /<WindStation\.Summary> must render inside <WindStation>/,
+      expect(() => render(<StationCard.Summary />)).toThrow(
+        /<StationCard\.Summary> must render inside <StationCard>/,
       );
     } finally {
       quiet.mockRestore();
@@ -583,14 +583,14 @@ describe("WindStation", () => {
      * the consumer composed the card, so the default must NOT appear. */
     const cond = false as boolean;
     const { container } = render(
-      <WindStation receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()}>
-        {cond && <WindStation.Header />}
-      </WindStation>,
+      <StationCard receivedAtMs={NOW_MS} servedAt={feed.servedAt} station={okStation()}>
+        {cond && <StationCard.Header />}
+      </StationCard>,
     );
-    expect(container.querySelector(".wind-station")).not.toBeNull();
-    expect(container.querySelector(".wind-station-name")).toBeNull();
-    expect(container.querySelector(".wind-dial")).toBeNull();
-    expect(container.querySelector(".wind-summary")).toBeNull();
+    expect(container.querySelector(".meteo-station-card")).not.toBeNull();
+    expect(container.querySelector(".meteo-station-card-name")).toBeNull();
+    expect(container.querySelector(".meteo-wind-dial")).toBeNull();
+    expect(container.querySelector(".meteo-summary")).toBeNull();
   });
 });
 
@@ -612,27 +612,27 @@ describe("StationFeedProvider", () => {
      * provider's knots (18.4 km/h → 10 kn), graded by the provider's
      * thresholds (18.4 km/h against [12, 20] km/h → band 1). */
     const { container } = provided(<CurrentConditions />);
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("10");
-    expect(container.querySelector(".wind-dial-unit")?.textContent).toBe("kn");
-    expect(container.querySelector(".wind-dial-arc.wind-band-1")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("10");
+    expect(container.querySelector(".meteo-wind-dial-unit")?.textContent).toBe("kn");
+    expect(container.querySelector(".meteo-wind-dial-arc.meteo-band-1")).not.toBeNull();
     expect(container.querySelector(".meteo-freshness")).not.toBeNull();
   });
 
   it("resolves per-station components by stationId, then primaryStationId, then stations[0]", () => {
     const { container: byId } = provided(<CurrentConditions stationId="down-station" />);
-    expect(byId.querySelector(".wind-current")?.getAttribute("data-status")).toBe("unavailable");
+    expect(byId.querySelector(".meteo-current")?.getAttribute("data-status")).toBe("unavailable");
 
     /* No primary declared: falls to stations[0]. */
     const noPrimary = { ...feedFixture(), primaryStationId: null };
     const { container: first } = provided(<CurrentConditions />, noPrimary);
-    expect(first.querySelector(".wind-dial-speed")?.textContent).toBe("10");
+    expect(first.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("10");
   });
 
   it("lets explicit props override the provider, and null thresholds opt out", () => {
     const { container } = provided(<CurrentConditions thresholds={null} unit="kmh" />);
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("18");
-    const arc = container.querySelector(".wind-dial-arc");
-    expect(arc?.getAttribute("class")).toBe("wind-dial-arc");
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("18");
+    const arc = container.querySelector(".meteo-wind-dial-arc");
+    expect(arc?.getAttribute("class")).toBe("meteo-wind-dial-arc");
   });
 
   it("feeds the fleet components their stations", () => {
@@ -644,16 +644,16 @@ describe("StationFeedProvider", () => {
       </>,
       feed,
     );
-    expect(container.querySelectorAll(".wind-table [role='row']").length).toBe(4);
+    expect(container.querySelectorAll(".meteo-station-table [role='row']").length).toBe(4);
     expect(container.querySelector(".meteo-air-trigger")).not.toBeNull();
   });
 
-  it("threads defaults through a propless WindStation card", () => {
-    const { container } = provided(<WindStation />);
-    expect(container.querySelector(".wind-station-name")?.textContent).toContain("Test Station");
+  it("threads defaults through a propless StationCard card", () => {
+    const { container } = provided(<StationCard />);
+    expect(container.querySelector(".meteo-station-card-name")?.textContent).toContain("Test Station");
     /* Provider thresholds grade the dial arc; provider unit labels it. */
-    expect(container.querySelector(".wind-dial-arc.wind-band-1")).not.toBeNull();
-    expect(container.querySelector(".wind-dial-unit")?.textContent).toBe("kn");
+    expect(container.querySelector(".meteo-wind-dial-arc.meteo-band-1")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-unit")?.textContent).toBe("kn");
   });
 
   it("merges strings layer by layer instead of replacing", () => {
@@ -668,7 +668,7 @@ describe("StationFeedProvider", () => {
       </StationFeedProvider>,
     );
     /* The inner layer overrode one word; the provider's other words held. */
-    expect(container.querySelector(".wind-flank-gust .wind-microlabel")?.textContent).toBe("puff");
+    expect(container.querySelector(".meteo-current-flank-gust .meteo-microlabel")?.textContent).toBe("puff");
     expect(container.querySelector(".meteo-freshness")?.textContent).toBe("Fresh");
   });
 
@@ -694,6 +694,6 @@ describe("StationFeedProvider", () => {
         unit="kmh"
       />,
     );
-    expect(container.querySelector(".wind-threshold-label.wind-band-2")?.textContent).toBe("20");
+    expect(container.querySelector(".meteo-wind-threshold-label.meteo-band-2")?.textContent).toBe("20");
   });
 });

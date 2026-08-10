@@ -14,88 +14,12 @@
  * where there is no number (pressure trend). The last lightning strike is a
  * sentence under the table: a distance and a time are not a count. */
 import { useId, useState } from "react";
-import type { AirConditions, Station } from "../../index.js";
-import { airSummary, lastStrikeWords } from "../lib/air.js";
-import { EM_DASH, defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides, StationStrings } from "../lib/strings.js";
+import { airRows, resolveDisplay } from "../../index.js";
+import type { Station } from "../../index.js";
+import { airSummary, lastStrikeWords } from "../../index.js";
+import { EM_DASH } from "../../index.js";
+import type { FormatTime, StationStringOverrides } from "../../index.js";
 import { requireResolved, useStationFeedContext } from "./StationFeedProvider.js";
-
-type AirRow = {
-  label: string;
-  unit: string;
-  value: (conditions: AirConditions) => string | null;
-};
-
-/* Row order follows the reference discipline: body feel first, then the
- * pressure story, then sun, then water, then hazard. */
-function airRows(words: StationStrings): AirRow[] {
-  const air = words.air;
-  return [
-    /* Feels-like rides the reading, not the conditions block; it is threaded
-     * in via a synthetic field below. */
-    {
-      label: air.humidity,
-      unit: air.unitPercent,
-      value: (c) =>
-        c.relativeHumidityPercent == null ? null : `${Math.round(c.relativeHumidityPercent)}`,
-    },
-    {
-      label: air.dewPoint,
-      unit: words.degC,
-      value: (c) => c.dewPointC?.toFixed(1) ?? null,
-    },
-    {
-      label: air.pressure,
-      unit: air.unitHpa,
-      value: (c) => c.seaLevelPressureHpa?.toFixed(1) ?? null,
-    },
-    {
-      /* Word cells, so the label carries no unit. */
-      label: air.pressureTrend,
-      unit: "",
-      value: (c) =>
-        c.pressureTrend === "falling"
-          ? air.trendFalling
-          : c.pressureTrend === "rising"
-            ? air.trendRising
-            : c.pressureTrend === "steady"
-              ? air.trendSteady
-              : null,
-    },
-    {
-      label: air.solar,
-      unit: air.unitWm2,
-      value: (c) => (c.solarRadiationWm2 == null ? null : `${Math.round(c.solarRadiationWm2)}`),
-    },
-    {
-      label: air.uv,
-      unit: air.unitIndex,
-      value: (c) => (c.uvIndex == null ? null : `${Math.round(c.uvIndex * 10) / 10}`),
-    },
-    {
-      label: air.rainRate,
-      unit: air.unitMmPerHour,
-      value: (c) => c.precipitationRateMmPerHour?.toFixed(1) ?? null,
-    },
-    {
-      label: air.rainToday,
-      unit: air.unitMm,
-      value: (c) => c.precipitationTodayMm?.toFixed(1) ?? null,
-    },
-    {
-      label: air.rainMinutes,
-      unit: air.unitMinutes,
-      value: (c) =>
-        c.precipitationMinutesToday == null ? null : `${c.precipitationMinutesToday}`,
-    },
-    {
-      label: air.lightning,
-      unit: air.unitStrikesPastHour,
-      value: (c) =>
-        c.lightningStrikeCountLastHour == null ? null : `${c.lightningStrikeCountLastHour}`,
-    },
-  ];
-}
 
 export function AirMatrix({
   stations: stationsProp,
@@ -116,9 +40,10 @@ export function AirMatrix({
     "stations",
     stationsProp ?? context?.feed?.stations,
   );
-  const strings = mergeStringOverrides(context?.strings, stringsProp);
-  const formatTime = formatTimeProp ?? context?.formatTime ?? defaultFormatTime;
-  const words = resolveStrings(strings);
+  const { formatTime, words } = resolveDisplay(context, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+  });
   const panelId = useId();
   const [expanded, setExpanded] = useState(false);
 
@@ -172,7 +97,7 @@ export function AirMatrix({
             {/* Empty corner header keeps AT column counts aligned. */}
             <span className="meteo-air-corner" role="columnheader" />
             {capable.map((station) => (
-              <span className="wind-microlabel" key={station.id} role="columnheader">
+              <span className="meteo-microlabel" key={station.id} role="columnheader">
                 {station.name}
               </span>
             ))}

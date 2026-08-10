@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azohra Meteo — custom elements demo</title>
+  </head>
+  <body>
+    <!-- The point of this demo: the page is AUTHORED IN MARKUP. The script
+         registers the elements, hands the provider a synthetic feed, and
+         everything below renders itself — same stylesheet, same DOM, same
+         degradation shapes as the react demo. -->
+    <main class="meteo-root demo">
+      <header class="demo-header">
+        <h1>Azohra Meteo <small>custom elements</small></h1>
+        <p>
+          Every component below is a <code>&lt;meteo-*&gt;</code> tag in this
+          page's HTML — no framework, one module script.
+        </p>
+        <p class="demo-controls">
+          <label><input type="checkbox" id="simulate" /> simulate live</label>
+          <label><input type="checkbox" id="knots" /> knots</label>
+        </p>
+      </header>
+
+      <meteo-station-feed id="feed" thresholds='{"unit":"kmh","values":[12,20,28]}'>
+        <section class="demo-section">
+          <h2>The station card, default composition</h2>
+          <meteo-station-card station-id="launch-ridge"></meteo-station-card>
+        </section>
+
+        <section class="demo-section">
+          <h2>A composed card — header, chart with its own thresholds, summary</h2>
+          <meteo-station-card station-id="summit-logger">
+            <meteo-station-card-header></meteo-station-card-header>
+            <meteo-station-card-chart thresholds='{"unit":"kmh","values":[20,32,45]}'></meteo-station-card-chart>
+            <meteo-station-card-summary></meteo-station-card-summary>
+          </meteo-station-card>
+        </section>
+
+        <section class="demo-section">
+          <h2>An unavailable station degrades honestly</h2>
+          <meteo-station-card station-id="north-bluff"></meteo-station-card>
+        </section>
+
+        <section class="demo-section demo-row">
+          <div>
+            <h2>Instruments</h2>
+            <meteo-current-conditions station-id="launch-ridge"></meteo-current-conditions>
+          </div>
+          <div>
+            <h2>Bare dial, no ambient grading</h2>
+            <meteo-dial station-id="summit-logger" thresholds="none"></meteo-dial>
+          </div>
+          <div>
+            <h2>Roses</h2>
+            <meteo-wind-rose station-id="launch-ridge"></meteo-wind-rose>
+          </div>
+        </section>
+
+        <section class="demo-section">
+          <h2>Trends</h2>
+          <meteo-trend-chart series="temperature" station-id="summit-logger"></meteo-trend-chart>
+          <meteo-trend-chart series="pressure" station-id="launch-ridge"></meteo-trend-chart>
+          <p><small>Summit Logger carries no pressure — "not measured here", never an empty grid:</small></p>
+          <meteo-trend-chart series="pressure" station-id="summit-logger"></meteo-trend-chart>
+        </section>
+
+        <section class="demo-section">
+          <h2>Air and precipitation</h2>
+          <meteo-air-matrix></meteo-air-matrix>
+        </section>
+
+        <section class="demo-section">
+          <h2>The fleet</h2>
+          <meteo-station-table id="table"></meteo-station-table>
+        </section>
+
+        <section class="demo-section">
+          <h2>Strips</h2>
+          <meteo-station-strip station-id="launch-ridge"></meteo-station-strip>
+          <meteo-station-strip station-id="valley-tempest"></meteo-station-strip>
+          <meteo-station-strip station-id="north-bluff"></meteo-station-strip>
+        </section>
+
+        <section class="demo-section">
+          <h2>Primitives, inline in a sentence</h2>
+          <p>
+            Launch Ridge is blowing <meteo-speed station-id="launch-ridge"></meteo-speed>
+            <meteo-direction station-id="launch-ridge"></meteo-direction>, gusting
+            <meteo-gust station-id="launch-ridge"></meteo-gust>, updated
+            <meteo-updated-at station-id="launch-ridge"></meteo-updated-at>
+            <meteo-band-chip id="chip" station-id="launch-ridge"></meteo-band-chip>
+            <meteo-sparkline station-id="launch-ridge"></meteo-sparkline>
+          </p>
+        </section>
+      </meteo-station-feed>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

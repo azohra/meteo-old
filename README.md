@@ -21,7 +21,7 @@ consumer never pays for a renderer it didn't ask for.
 
 | Capability | Import | Status |
 |---|---|---|
-| Live weather stations | `@azohra/meteo/station` (+ `/server`, `/react`) | **Available — below** |
+| Live weather stations | `@azohra/meteo/station` (+ `/client`, `/server`, `/react`, `/elements`) | **Available — below** |
 | Forecast pipeline | `@azohra/meteo/forecast` | Incubating at [azohra/windgram](https://github.com/azohra/windgram); migrating here |
 | Windgram generator | `@azohra/meteo/gram` | Incubating at [azohra/windgram](https://github.com/azohra/windgram); migrating here |
 | Soundings (Skew-T, hodograph) | `@azohra/meteo/sounding/*` | Planned |
@@ -49,7 +49,10 @@ adapters normalize every station you care about — whatever hardware it runs �
 into one wire contract, a mountable handler serves the fleet as a single
 feed, and reactive components render it in *your* design system with the
 visual richness of a station page: instrument dial, color-graded history,
-wind rose, multi-station comparison.
+wind rose, multi-station comparison. Two peer bindings render the same DOM
+from the same shared core — React components, or framework-free custom
+elements for any page at all — and neither is "the reference": a parity
+suite holds them byte-identical.
 
 ## Gallery
 
@@ -99,9 +102,9 @@ export const onRequest = createStationFeedHandler({
 ```
 
 ```tsx
-// client: render the fleet
-import { StationFeedProvider, useStation, WindStation, StationTable } from "@azohra/meteo/station/react";
-import "@azohra/meteo/station/react/styles.css";
+// client, the react binding: render the fleet
+import { StationFeedProvider, useStation, StationCard, StationTable } from "@azohra/meteo/station/react";
+import "@azohra/meteo/station/styles.css";
 
 function LiveWind() {
   // mount base in, polling out: `${base}/feed` + the light `${base}/current`
@@ -111,13 +114,31 @@ function LiveWind() {
     <div className="meteo-root">
       <StationFeedProvider feed={feed} receivedAtMs={receivedAtMs}
         thresholds={{ unit: "kmh", values: [12, 20, 28] }}> {/* your vocabulary; converted to the m/s wire once */}
-        <WindStation />    {/* the named station, fully rendered */}
+        <StationCard />    {/* the named station, fully rendered */}
         <StationTable /> {/* the whole fleet */}
       </StationFeedProvider>
     </div>
   );
 }
 ```
+
+```html
+<!-- client, the custom-elements binding: the same page with no framework at all -->
+<script type="module">
+  import "@azohra/meteo/station/elements/register";
+  import "@azohra/meteo/station/styles.css";
+</script>
+<div class="meteo-root">
+  <meteo-station-feed src="/api/wind" station="launch"
+      thresholds='{"unit":"kmh","values":[12,20,28]}'>
+    <meteo-station-card></meteo-station-card>
+    <meteo-station-table></meteo-station-table>
+  </meteo-station-feed>
+</div>
+```
+
+The two bindings are peers over one shared core — same polling stores, same
+words, same instrument geometry, same emitted DOM under the same stylesheet.
 
 ## Documentation
 
@@ -126,7 +147,9 @@ function LiveWind() {
 | [docs/getting-started.md](docs/getting-started.md) | Install, mount the handler, render components, the data-level API |
 | [docs/wire-contract.md](docs/wire-contract.md) | Document shape, semantics, evolution rules, HTTP protocol, freshness ([JSON Schema](schema/)) |
 | [docs/adapters.md](docs/adapters.md) | Custom adapters, `defineStationAdapter`, the rulebook, environment injection, caching, polling etiquette |
+| [docs/client-data.md](docs/client-data.md) | The framework-free client layer: poller semantics, stores, cadence, the merge clock rule, display resolution |
 | [docs/react.md](docs/react.md) | Provider, hooks, thresholds, composition, SSR seeding |
+| [docs/elements.md](docs/elements.md) | The custom-elements binding: registration, the provider element, attributes vs properties, composition, client rendering |
 | [docs/theming.md](docs/theming.md) | `.meteo-root` scoping, token tables, dark mode, `@layer` |
 
 [`station/README.md`](station/README.md) is the capability's compact

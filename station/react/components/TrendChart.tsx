@@ -21,28 +21,25 @@ import {
   useRef,
   useState,
 } from "react";
-import { CHART_FALLBACK_WIDTH, chartFrame, chartScales, nearestIndex, valueScale } from "../../index.js";
-import type { ChartFrame, History, HistoryPoint, Station } from "../../index.js";
-import { EM_DASH, defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides, StationStrings } from "../lib/strings.js";
+import {
+  CHART_FALLBACK_WIDTH,
+  chartFrame,
+  chartScales,
+  nearestIndex,
+  resolveDisplay,
+  trendRuns,
+  trendSeriesPad,
+  trendValueOf,
+  valueScale,
+} from "../../index.js";
+import type { ChartFrame, History, Station, TrendSeries } from "../../index.js";
+import { EM_DASH } from "../../index.js";
+import type { FormatTime, StationStringOverrides, StationStrings } from "../../index.js";
 import {
   requireResolved,
   resolveStation,
   useStationFeedContext,
 } from "./StationFeedProvider.js";
-
-export type TrendSeries = "temperature" | "pressure";
-
-/* Same dropout tolerance historyGaps applies: silence beyond 2.5 declared
- * periods is an outage, not a long sample. */
-const GAP_TOLERANCE_FACTOR = 2.5;
-
-const valueOf = (point: HistoryPoint, series: TrendSeries): number | null =>
-  series === "temperature" ? point.temperatureC : (point.seaLevelPressureHpa ?? null);
-
-/* Units are fixed per series — °C and hPa — which is why this component
- * takes no speed `unit` prop at all. */
-const seriesPad = (series: TrendSeries): number => (series === "temperature" ? 1 : 2);
 
 export function TrendChart({
   station: stationProp,
@@ -65,15 +62,18 @@ export function TrendChart({
     "station",
     stationProp ?? resolveStation(context, stationId),
   );
-  const strings = mergeStringOverrides(context?.strings, stringsProp);
-  const formatTime = formatTimeProp ?? context?.formatTime ?? defaultFormatTime;
-  const words = resolveStrings(strings);
+  const { formatTime, words } = resolveDisplay(context, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+  });
   const wrapRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState<number | null>(null);
 
   const history = station.status === "ok" ? station.history : null;
   const carrying =
-    history == null ? 0 : history.points.filter((point) => valueOf(point, series) != null).length;
+    history == null
+      ? 0
+      : history.points.filter((point) => trendValueOf(point, series) != null).length;
   const drawable =
     station.capabilities.history && history != null && history.points.length >= 2 && carrying >= 2;
 
@@ -164,42 +164,26 @@ function MeasuredTrend({
   /* The shared value scale: padded so a flat afternoon never zooms sensor
    * noise into drama; nulls are the gap-breaking loop's business below. */
   const scale = valueScale(
-    points.map((point) => valueOf(point, series)),
+    points.map((point) => trendValueOf(point, series)),
     frame,
-    { paddingMin: seriesPad(series) },
+    { paddingMin: trendSeriesPad(series) },
   );
   const yAt = scale.yAt;
 
-  /* Runs of consecutive carrying samples; a null value or a dropout breaks
-   * the run. A one-sample run draws as a dot — a lone measurement between
-   * gaps is still a measurement. Each run remembers its first sample's
-   * observedAt as its React key: a timestamp names the run under a sliding
-   * window, where a pixel coordinate would collide or churn. */
-  type Run = { startedAt: string; coords: Array<readonly [number, number]> };
-  const gapLimitMs = history.periodMinutes * 60_000 * GAP_TOLERANCE_FACTOR;
-  const segments: Run[] = [];
-  let run: Run | null = null;
-  let previousMs = Number.NEGATIVE_INFINITY;
-  for (const point of points) {
-    const value = valueOf(point, series);
-    const ms = Date.parse(point.observedAt);
-    if ((value == null || ms - previousMs > gapLimitMs) && run != null) {
-      segments.push(run);
-      run = null;
-    }
-    if (value != null) {
-      run ??= { startedAt: point.observedAt, coords: [] };
-      run.coords.push([scales.xAtMs(ms), yAt(value)] as const);
-    }
-    previousMs = ms;
-  }
-  if (run != null) segments.push(run);
+  /* Runs of consecutive carrying samples — the shared trendRuns split (a
+   * null value or a dropout breaks the run; a one-sample run draws as a
+   * dot). Runs arrive as [ms, value] pairs; only the mapping to pixels is
+   * ours. */
+  const segments = trendRuns(points, series, history.periodMinutes).map((run) => ({
+    startedAt: run.startedAt,
+    coords: run.samples.map(([ms, value]) => [scales.xAtMs(ms), yAt(value)] as const),
+  }));
 
   const foundPin = pinnedAt == null ? -1 : points.findIndex((point) => point.observedAt === pinnedAt);
   const pinnedIndex = foundPin === -1 ? null : foundPin;
   const activeIndex = previewIndex ?? pinnedIndex;
   const active = activeIndex == null ? undefined : points[activeIndex];
-  const activeValue = active == null ? null : valueOf(active, series);
+  const activeValue = active == null ? null : trendValueOf(active, series);
 
   const indexAtPoint = (clientX: number, hit: SVGRectElement): number | null => {
     const svg = hit.ownerSVGElement;
@@ -270,8 +254,8 @@ function MeasuredTrend({
           const gridY = frame.plotBottom - fraction * (frame.plotBottom - frame.plotTop);
           return (
             <g key={fraction}>
-              <line className="wind-grid-line" x1={frame.left} x2={frame.right} y1={gridY} y2={gridY} />
-              <text className="wind-grid-label" textAnchor="end" x={frame.left - 6} y={gridY + 5}>
+              <line className="meteo-grid-line" x1={frame.left} x2={frame.right} y1={gridY} y2={gridY} />
+              <text className="meteo-grid-label" textAnchor="end" x={frame.left - 6} y={gridY + 5}>
                 {Math.round(scale.min + fraction * (scale.max - scale.min))}
               </text>
             </g>
@@ -296,7 +280,7 @@ function MeasuredTrend({
         )}
         {ticks.map(({ index, timeMs }) => (
           <text
-            className="wind-tick"
+            className="meteo-tick"
             key={index}
             textAnchor={index === 0 ? "start" : index === 4 ? "end" : "middle"}
             x={scales.xAtMs(timeMs)}
@@ -308,7 +292,7 @@ function MeasuredTrend({
         {active && (
           <>
             <line
-              className="wind-cursor"
+              className="meteo-cursor"
               x1={scales.xAt(active.observedAt)}
               x2={scales.xAt(active.observedAt)}
               y1={frame.plotTop}
@@ -316,7 +300,7 @@ function MeasuredTrend({
             />
             {activeValue != null && (
               <circle
-                className="wind-cursor-dot"
+                className="meteo-cursor-dot"
                 cx={scales.xAt(active.observedAt)}
                 cy={yAt(activeValue)}
                 r={3}
@@ -326,7 +310,7 @@ function MeasuredTrend({
         )}
         {/* On top of everything drawn, so the pointer always lands here. */}
         <rect
-          className="wind-hit"
+          className="meteo-hit"
           fill="transparent"
           height={frame.height}
           onClick={handleClick}

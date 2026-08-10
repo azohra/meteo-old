@@ -19,3 +19,4 @@ jobs:
       - run: pnpm build
       - run: pnpm test
       - run: pnpm --dir examples/demo build
+      - run: pnpm --dir examples/demo-elements build

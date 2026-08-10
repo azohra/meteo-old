@@ -5,8 +5,8 @@
  *
  * Named useStation — the package speaks Station* (StationFeed,
  * StationCurrent, useStationFeed, useStationCurrent), and this hook returns
- * a `station`; "useWindStation" would tie a data hook to one component's
- * name, and "useStationCard" names a UI shape the hook knows nothing about.
+ * a `station`; "useStationCard" would name a UI shape the hook knows
+ * nothing about.
  *
  * `url` is the MOUNT BASE (e.g. "/api/wind"), exactly as on the two hooks it
  * composes. The current poll rides the station's own recommendedPollSeconds
@@ -19,9 +19,9 @@
  * receivedAtMs rather than crediting a dead station with a response it
  * never produced. */
 import { useCallback, useMemo } from "react";
+import { foldCurrent } from "../../index.js";
 import type { Station, StationFeed } from "../../index.js";
-import { mergeCurrent } from "../lib/mergeCurrent.js";
-import type { PollError } from "./usePolledJson.js";
+import type { PollError } from "../../client/index.js";
 import { useStationCurrent } from "./useStationCurrent.js";
 import { useStationFeed } from "./useStationFeed.js";
 
@@ -57,20 +57,18 @@ export function useStation(
     ...(fetchInit != null ? { fetchInit } : {}),
   });
 
-  const merged = useMemo(() => {
-    if (feedResult.feed == null) {
-      return { feed: null as StationFeed | null, receivedAtMs: null as number | null };
-    }
-    if (currentResult.current == null) {
-      return { feed: feedResult.feed, receivedAtMs: feedResult.receivedAtMs };
-    }
-    const result = mergeCurrent(feedResult.feed, currentResult.current);
-    return {
-      feed: result.feed,
-      /* The merged:false / keep-previous-receivedAtMs rule, applied. */
-      receivedAtMs: result.merged ? currentResult.receivedAtMs : feedResult.receivedAtMs,
-    };
-  }, [feedResult.feed, feedResult.receivedAtMs, currentResult.current, currentResult.receivedAtMs]);
+  /* The shared fold: merge + the merged:false / keep-previous-receivedAtMs
+   * clock rule, applied where every binding applies it. */
+  const merged = useMemo(
+    () =>
+      foldCurrent(
+        feedResult.feed,
+        feedResult.receivedAtMs,
+        currentResult.current,
+        currentResult.receivedAtMs,
+      ),
+    [feedResult.feed, feedResult.receivedAtMs, currentResult.current, currentResult.receivedAtMs],
+  );
 
   const station = merged.feed?.stations.find((entry) => entry.id === stationId) ?? null;
 

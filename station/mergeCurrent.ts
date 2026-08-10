@@ -1,4 +1,3 @@
-"use client";
 /* Fold a light /current response into the last full feed: the matching
  * station's reading and meta advance while its history stays put.
  *
@@ -19,10 +18,9 @@
  * current response's receivedAtMs (servedAt advanced to the current
  * response's clock). When merged is false nothing advanced — keep the
  * PREVIOUS receivedAtMs, or freshness would credit a dead station with a
- * response it never produced. useStation(mountBase, stationId) composes
- * useStationFeed + useStationCurrent + this merge with that clock rule
- * already applied. */
-import type { Reading, StationCurrent, StationFeed } from "../../index.js";
+ * response it never produced. foldCurrent applies that clock rule; the
+ * React useStation hook and the elements feed store both call it. */
+import type { Reading, StationCurrent, StationFeed } from "./contract.js";
 
 export type MergeResult = { feed: StationFeed; merged: boolean };
 
@@ -59,5 +57,25 @@ export function mergeCurrent(feed: StationFeed, current: StationCurrent): MergeR
       }),
     },
     merged: true,
+  };
+}
+
+/* The merge with its clock rule applied, in one place: when the current
+ * response merged, the pair is (merged feed, current receivedAtMs); when
+ * merged is false — or there is no current at all — nothing advanced, so the
+ * feed keeps its OWN receivedAtMs rather than crediting a dead station with
+ * a response it never produced. */
+export function foldCurrent(
+  feed: StationFeed | null,
+  feedReceivedAtMs: number | null,
+  current: StationCurrent | null,
+  currentReceivedAtMs: number | null,
+): { feed: StationFeed | null; receivedAtMs: number | null } {
+  if (feed == null) return { feed: null, receivedAtMs: null };
+  if (current == null) return { feed, receivedAtMs: feedReceivedAtMs };
+  const result = mergeCurrent(feed, current);
+  return {
+    feed: result.feed,
+    receivedAtMs: result.merged ? currentReceivedAtMs : feedReceivedAtMs,
   };
 }

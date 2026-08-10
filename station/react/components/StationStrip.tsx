@@ -12,17 +12,11 @@
  * unavailable station keeps its line: the name stays, the reason words stand
  * in for the reading cells, and the height holds. */
 import type { SpeedUnit, Station } from "../../index.js";
-import { stationFreshnessThresholds } from "../../index.js";
+import { resolveDisplay, stationFreshnessThresholds } from "../../index.js";
 import { useFreshness } from "../hooks/useFreshness.js";
-import {
-  DirectionCell,
-  StationNameLink,
-  optionalSpeed,
-  roundSpeed,
-  temperatureText,
-} from "../lib/cells.js";
-import { defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides } from "../lib/strings.js";
+import { optionalSpeed, roundSpeed, temperatureText } from "../../index.js";
+import { DirectionCell, StationNameLink } from "../lib/cells.js";
+import type { FormatTime, StationStringOverrides } from "../../index.js";
 import { FreshnessBadge } from "./FreshnessBadge.js";
 import {
   requireResolved,
@@ -61,10 +55,11 @@ export function StationStrip({
   const servedAt = servedAtProp ?? context?.feed?.servedAt ?? null;
   const receivedAtMs =
     receivedAtMsProp !== undefined ? receivedAtMsProp : (context?.receivedAtMs ?? null);
-  const unit = unitProp ?? context?.unit ?? "kmh";
-  const strings = mergeStringOverrides(context?.strings, stringsProp);
-  const formatTime = formatTimeProp ?? context?.formatTime ?? defaultFormatTime;
-  const words = resolveStrings(strings);
+  const { formatTime, strings, unit, words } = resolveDisplay(context, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+    unit: unitProp,
+  });
   const status = useFreshness(
     station.reading?.observedAt ?? null,
     servedAt,
@@ -90,11 +85,11 @@ export function StationStrip({
           {station.capabilities.gustLull && (
             <>
               <span className="meteo-strip-lull">
-                <small className="wind-microlabel">{words.lullLabel}</small>
+                <small className="meteo-microlabel">{words.lullLabel}</small>
                 {optionalSpeed(station.reading.lullMps, unit)}
               </span>
               <span className="meteo-strip-gust">
-                <small className="wind-microlabel">{words.gustLabel}</small>
+                <small className="meteo-microlabel">{words.gustLabel}</small>
                 {optionalSpeed(station.reading.gustMps, unit)}
               </span>
             </>

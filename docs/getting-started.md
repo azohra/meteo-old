@@ -99,9 +99,9 @@ never the document), `servedAt`, and `schemaVersion`.
 ## 2 · Render the fleet
 
 ```tsx
-import "@azohra/meteo/station/react/styles.css"; // the default skin (an intentional side effect)
+import "@azohra/meteo/station/styles.css"; // the default skin (an intentional side effect)
 import {
-  StationFeedProvider, useStation, WindStation, StationTable,
+  StationFeedProvider, useStation, StationCard, StationTable,
 } from "@azohra/meteo/station/react";
 
 function LiveWind() {
@@ -120,12 +120,25 @@ function LiveWind() {
         thresholds={{ unit: "kmh", values: [12, 20, 28] }} // the club's vocabulary
         unit="knots"                                       // what the numbers wear
       >
-        <WindStation />     {/* the feed's primary station, provider-fed */}
+        <StationCard />     {/* the feed's primary station, provider-fed */}
         <StationTable />  {/* the whole fleet, no props re-threaded */}
       </StationFeedProvider>
     </div>
   );
 }
+```
+
+No react? The same page is one module script and plain markup with the
+[custom-elements binding](elements.md) — `<meteo-station-feed src="/api/wind">`
+polls the same endpoints through the same shared stores and its children
+render the same DOM:
+
+```html
+<script type="module">import "@azohra/meteo/station/elements/register";</script>
+<meteo-station-feed src="/api/wind" thresholds='{"unit":"kmh","values":[12,20,28]}'>
+  <meteo-station-card></meteo-station-card>
+  <meteo-station-table></meteo-station-table>
+</meteo-station-feed>
 ```
 
 `useStationFeed(url)` polls the feed alone; `useStation` adds the light

@@ -1,5 +1,5 @@
-/* Page chrome only — everything meteo- and wind-prefixed is the library's
- * skin. The chrome speaks the library's own vocabulary: every colour below
+/* Page chrome only — everything meteo-prefixed is the library's skin. The
+ * chrome speaks the library's own vocabulary: every colour below
  * is a --meteo-* token or a light-dark() pair, so the header, nav, and
  * panels follow the same color-scheme the meteo-root resolves — including
  * the data-theme pin the theme switch sets. */

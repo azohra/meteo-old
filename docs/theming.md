@@ -4,7 +4,7 @@ Every colour the components paint rides a CSS custom property with a light
 fallback baked in. Import the default skin once —
 
 ```ts
-import "@azohra/meteo/station/react/styles.css";
+import "@azohra/meteo/station/styles.css";
 ```
 
 — and wrap your markup in `.meteo-root` for the token set. Override any token
@@ -34,9 +34,28 @@ Remove the attribute (or set any other value) to return to following the
 system. Because both arms of every token are always declared, a theme switch
 is instant and complete — there is no partially-themed state.
 
-## Token reference
+## The vocabulary
 
-Two prefixes, by scope.
+Everything the suite ships — classes and tokens — starts with `meteo-`, so
+one grep of your page finds all of it. Within that root, three tiers:
+
+- **Bare `meteo-*`** — the shared skin and generic furniture any capability
+  may use: surfaces, ink, `meteo-grid-line`, `meteo-tick`, `meteo-cursor`,
+  `meteo-hit`, `meteo-microlabel`, the freshness badge, the value/unit
+  spans.
+- **`meteo-band-*`** — speed grading, deliberately suite-wide: today the
+  station components wear `meteo-band-0..n`; the windgram capability grades
+  the same wind speeds when it lands, against the same tokens.
+- **`meteo-<family>-*`** — component-family scope. Wind lives only where
+  wind is actually visualized: `meteo-wind-*` (dial, rose, the wind history
+  chart, vanes, the lull–gust band). Station-level artifacts are
+  station-scoped — `meteo-station-card-*`, `meteo-station-table-*`,
+  `meteo-current-*`, `meteo-summary-*` — because a station is a weather
+  station, not a wind station. Alongside: `meteo-air-*`, `meteo-trend-*`,
+  `meteo-strip-*`, `meteo-sparkline-*`. Future capabilities follow the same
+  pattern (`meteo-gram-*`, `meteo-sounding-*`).
+
+## Token reference
 
 ### `--meteo-*` — the shared skin
 
@@ -50,28 +69,33 @@ Two prefixes, by scope.
 | `--meteo-grid` | Chart gridlines |
 | `--meteo-accent` | The accent (ungraded traces, links, emphasis) |
 | `--meteo-gap` | Dropout hatching in charts |
+| `--meteo-cursor` | The chart inspector cursor |
 | `--meteo-freshness-live` / `-aging` / `-stale` | The freshness badge states |
 | `--meteo-font` | Font stack for all component text (incl. SVG) |
 | `--meteo-radius` | Corner radius |
 | `--meteo-shadow` | Card shadow |
 
-### `--wind-*` — genuinely wind-scoped
+### `--meteo-band-*` — speed grading, suite-wide
 
 | Token | Role |
 |---|---|
-| `--wind-band-fill` | The lull–gust envelope fill |
-| `--wind-mean` | The mean trace when ungraded |
-| `--wind-vane` | Vane glyphs in the direction row |
-| `--wind-cursor` | The chart inspector cursor |
-| `--wind-favorable` / `--wind-unfavorable` | The rose's judgment ring |
-| `--wind-band-0` … `--wind-band-4` | Speed grading, calm → strong |
+| `--meteo-band-0` … `--meteo-band-4` | Speed grading, calm → strong |
+
+### `--meteo-wind-*` — genuinely wind-scoped
+
+| Token | Role |
+|---|---|
+| `--meteo-wind-band-fill` | The lull–gust envelope fill |
+| `--meteo-wind-mean` | The mean trace when ungraded |
+| `--meteo-wind-vane` | Vane glyphs in the direction row |
+| `--meteo-wind-favorable` / `--meteo-wind-unfavorable` | The rose's judgment ring |
 
 ## Speed bands and your palette
 
 `thresholds` ([react.md](react.md#thresholds)) grades traces, dial arcs, and
-rose petals into `wind-band-0..n` **classes** — what a band means and what
+rose petals into `meteo-band-0..n` **classes** — what a band means and what
 colour it wears belong to your CSS. Three thresholds make four bands; add
-`--wind-band-*` overrides (and rules for higher indices if you declare more
+`--meteo-band-*` overrides (and rules for higher indices if you declare more
 thresholds) to speak your club's colour language.
 
 ## Dark-mode notes

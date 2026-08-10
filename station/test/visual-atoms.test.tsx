@@ -5,39 +5,40 @@
  * dropout and null-pair honesty). */
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Dial, Sparkline, defaultStrings } from "../react/index.js";
+import { Dial, Sparkline } from "../react/index.js";
+import { defaultStrings } from "../index.js";
 import { downStation, makePoints, okStation } from "./fixtures.js";
 
 describe("Dial", () => {
   it("draws the full instrument: face, ring, arc, ticks, cardinals, needle, hub, centred speed", () => {
     const { container } = render(<Dial station={okStation()} />);
-    const svg = container.querySelector("svg.wind-dial");
+    const svg = container.querySelector("svg.meteo-wind-dial");
     expect(svg).not.toBeNull();
     expect(svg?.getAttribute("role")).toBe("img");
-    expect(container.querySelector(".wind-dial-face")).not.toBeNull();
-    expect(container.querySelector(".wind-dial-bezel")).not.toBeNull();
-    expect(container.querySelector(".wind-dial-ring")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-face")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-bezel")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-ring")).not.toBeNull();
     /* No thresholds: the arc wears the neutral accent, no band class. */
-    expect(container.querySelector(".wind-dial-arc")?.getAttribute("class")).toBe("wind-dial-arc");
-    expect(container.querySelectorAll(".wind-dial-tick").length).toBe(16);
-    expect(container.querySelectorAll(".wind-dial-tick-cardinal").length).toBe(4);
+    expect(container.querySelector(".meteo-wind-dial-arc")?.getAttribute("class")).toBe("meteo-wind-dial-arc");
+    expect(container.querySelectorAll(".meteo-wind-dial-tick").length).toBe(16);
+    expect(container.querySelectorAll(".meteo-wind-dial-tick-cardinal").length).toBe(4);
     expect(
-      Array.from(container.querySelectorAll(".wind-dial-letter")).map((letter) => letter.textContent),
+      Array.from(container.querySelectorAll(".meteo-wind-dial-letter")).map((letter) => letter.textContent),
     ).toEqual(["N", "E", "S", "W"]);
-    expect(container.querySelector(".wind-needle-blade")).not.toBeNull();
-    expect(container.querySelector(".wind-needle-counterweight")).not.toBeNull();
-    expect(container.querySelector(".wind-dial-hub")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-needle-blade")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-needle-counterweight")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-hub")).not.toBeNull();
     /* 18.4 km/h on the wire, kmh display default. */
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("18");
-    expect(container.querySelector(".wind-dial-unit")?.textContent).toBe("km/h");
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("18");
+    expect(container.querySelector(".meteo-wind-dial-unit")?.textContent).toBe("km/h");
     expect(svg?.getAttribute("aria-label")).toBe("Test Station: 18 km/h");
   });
 
   it("converts the centred speed to the display unit", () => {
     /* 18.4 km/h = 5.11 m/s ≈ 9.94 kn → 10 kn on a knots dial. */
     const { container } = render(<Dial station={okStation()} unit="knots" />);
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("10");
-    expect(container.querySelector(".wind-dial-unit")?.textContent).toBe("kn");
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("10");
+    expect(container.querySelector(".meteo-wind-dial-unit")?.textContent).toBe("kn");
   });
 
   it("grades the speed arc into the reading's band when thresholds are given", () => {
@@ -45,7 +46,7 @@ describe("Dial", () => {
     const { container } = render(
       <Dial station={okStation()} thresholds={{ unit: "kmh", values: [12, 20] }} />,
     );
-    expect(container.querySelector(".wind-dial-arc.wind-band-1")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-arc.meteo-band-1")).not.toBeNull();
   });
 
   it("hides the needle and centres the calm word while the measured speed stays in the hub", () => {
@@ -59,12 +60,12 @@ describe("Dial", () => {
       },
     });
     const { container } = render(<Dial station={calm} />);
-    expect(container.querySelector(".wind-needle")).toBeNull();
-    expect(container.querySelector(".wind-needle-blade")).toBeNull();
-    expect(container.querySelector(".wind-dial-reason")?.textContent).toBe(defaultStrings.calm);
+    expect(container.querySelector(".meteo-wind-needle")).toBeNull();
+    expect(container.querySelector(".meteo-wind-needle-blade")).toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-reason")?.textContent).toBe(defaultStrings.calm);
     /* Calm withholds direction, never the measured speed. */
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("0");
-    expect(container.querySelector("svg.wind-dial")?.getAttribute("aria-label")).toBe(
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("0");
+    expect(container.querySelector("svg.meteo-wind-dial")?.getAttribute("aria-label")).toBe(
       `Test Station: ${defaultStrings.calm}, 0 km/h`,
     );
   });
@@ -80,10 +81,10 @@ describe("Dial", () => {
       },
     });
     const { container } = render(<Dial calmWord={false} station={calm} />);
-    expect(container.querySelector(".wind-dial-reason")).toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-reason")).toBeNull();
     /* The measured speed keeps the hub and the aria still speaks calm. */
-    expect(container.querySelector(".wind-dial-speed")?.textContent).toBe("0");
-    expect(container.querySelector("svg.wind-dial")?.getAttribute("aria-label")).toBe(
+    expect(container.querySelector(".meteo-wind-dial-speed")?.textContent).toBe("0");
+    expect(container.querySelector("svg.meteo-wind-dial")?.getAttribute("aria-label")).toBe(
       `Test Station: ${defaultStrings.calm}, 0 km/h`,
     );
   });
@@ -91,18 +92,18 @@ describe("Dial", () => {
   it("greys the dial and wears the reason in words when the station is unavailable", () => {
     const { container } = render(<Dial station={downStation()} />);
     const svg = container.querySelector("svg");
-    expect(svg?.getAttribute("class")).toBe("wind-dial wind-dial-unavailable");
+    expect(svg?.getAttribute("class")).toBe("meteo-wind-dial meteo-wind-dial-unavailable");
     expect(svg?.getAttribute("aria-label")).toBe(
       `Down Station: ${defaultStrings.reasons.upstream_error}`,
     );
-    expect(container.querySelector(".wind-dial-reason")?.textContent).toBe(
+    expect(container.querySelector(".meteo-wind-dial-reason")?.textContent).toBe(
       defaultStrings.notReporting,
     );
     /* No reading: no arc, no needle, no speed — the face and ring remain. */
-    expect(container.querySelector(".wind-dial-arc")).toBeNull();
-    expect(container.querySelector(".wind-needle")).toBeNull();
-    expect(container.querySelector(".wind-dial-speed")).toBeNull();
-    expect(container.querySelector(".wind-dial-ring")).not.toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-arc")).toBeNull();
+    expect(container.querySelector(".meteo-wind-needle")).toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-speed")).toBeNull();
+    expect(container.querySelector(".meteo-wind-dial-ring")).not.toBeNull();
   });
 
   it("scales the rendered box via size while the drawing geometry stays at 160", () => {
@@ -164,8 +165,8 @@ describe("Sparkline", () => {
     /* 12 points → 11 graded segments spanning bands 0..2 for averages 10..21;
      * the single polyline gives way entirely. */
     expect(container.querySelectorAll("line.meteo-sparkline-segment").length).toBe(11);
-    expect(container.querySelector(".meteo-sparkline-segment.wind-band-0")).not.toBeNull();
-    expect(container.querySelector(".meteo-sparkline-segment.wind-band-2")).not.toBeNull();
+    expect(container.querySelector(".meteo-sparkline-segment.meteo-band-0")).not.toBeNull();
+    expect(container.querySelector(".meteo-sparkline-segment.meteo-band-2")).not.toBeNull();
     expect(container.querySelector("polyline.meteo-sparkline-line")).toBeNull();
     expect(container.querySelector("polygon.meteo-sparkline-band")).not.toBeNull();
   });

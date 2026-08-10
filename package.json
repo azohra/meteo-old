@@ -1,7 +1,7 @@
 {
   "name": "@azohra/meteo",
-  "version": "0.2.0",
-  "description": "Azohra Meteo: open tooling for wind-sport weather. First capability — station: heterogeneous weather-station feeds behind one wire contract, vendor adapters, a mountable feed handler, and native React rendering.",
+  "version": "0.5.0",
+  "description": "Azohra Meteo: open tooling for wind-sport weather. First capability — station: heterogeneous weather-station feeds behind one wire contract, vendor adapters, a mountable feed handler, and native rendering as React components or framework-free custom elements.",
   "license": "MIT",
   "type": "module",
   "repository": {
@@ -16,6 +16,8 @@
     "wind",
     "anemometer",
     "react",
+    "web-components",
+    "custom-elements",
     "paragliding",
     "windnerd",
     "tempest",
@@ -26,11 +28,12 @@
     "node": ">=18.17"
   },
   "sideEffects": [
-    "*.css"
+    "*.css",
+    "dist/station/elements/register.js"
   ],
   "files": [
     "dist",
-    "station/react/styles.css",
+    "station/styles.css",
     "station/README.md",
     "docs",
     "schema"
@@ -40,9 +43,12 @@
   },
   "exports": {
     "./station": "./dist/station/index.js",
+    "./station/client": "./dist/station/client/index.js",
     "./station/server": "./dist/station/server/index.js",
     "./station/react": "./dist/station/react/index.js",
-    "./station/react/styles.css": "./station/react/styles.css"
+    "./station/elements": "./dist/station/elements/index.js",
+    "./station/elements/register": "./dist/station/elements/register.js",
+    "./station/styles.css": "./station/styles.css"
   },
   "scripts": {
     "prepare": "tsc -p tsconfig.build.json",

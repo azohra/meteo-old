@@ -33,9 +33,9 @@ import {
   UpdatedAt,
   WindHistoryChart,
   WindRose,
-  WindStation,
+  StationCard,
 } from "@azohra/meteo/station/react";
-import "@azohra/meteo/station/react/styles.css";
+import "@azohra/meteo/station/styles.css";
 import "./demo.css";
 import { buildDemoFeed } from "./fixtures";
 
@@ -64,7 +64,7 @@ const SECTIONS: { id: string; title: string; nav: string; note: string }[] = [
     id: "cards",
     title: "The station card",
     nav: "Cards",
-    note: "WindStation childless composes the full card; with children you pick the pieces — the second card is chart and summary only.",
+    note: "StationCard childless composes the full card; with children you pick the pieces — the second card is chart and summary only.",
   },
   {
     id: "instruments",
@@ -217,12 +217,12 @@ export default function App() {
           <section className="demo-section" id="cards">
             <SectionHead id="cards" />
             <div className="demo-grid demo-grid-cards">
-              <WindStation stationId="launch-ridge" />
-              <WindStation stationId="summit-logger">
-                <WindStation.Header />
-                <WindStation.Chart />
-                <WindStation.Summary />
-              </WindStation>
+              <StationCard stationId="launch-ridge" />
+              <StationCard stationId="summit-logger">
+                <StationCard.Header />
+                <StationCard.Chart />
+                <StationCard.Summary />
+              </StationCard>
             </div>
           </section>
 

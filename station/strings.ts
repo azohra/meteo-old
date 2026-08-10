@@ -1,11 +1,13 @@
-"use client";
 /* Every user-facing word in one object: consumers pass partial overrides for
  * copy or i18n and no component carries a literal of its own. Reason codes
  * come off the wire; the words for them live here — including the speed unit
  * labels, routed through strings so they are i18n-able like every other word
- * (derive's speedUnitLabel seeds the defaults). */
-import { speedUnitLabel } from "../../index.js";
-import type { CompassPoint, FreshnessStatus, SpeedUnit, UnavailableReason } from "../../index.js";
+ * (derive's speedUnitLabel seeds the defaults). Framework-free: every
+ * binding renders from this one vocabulary, so two bindings can never
+ * disagree on a word. */
+import type { UnavailableReason } from "./contract.js";
+import { speedUnitLabel } from "./derive.js";
+import type { CompassPoint, FreshnessStatus, SpeedUnit } from "./derive.js";
 
 export const EM_DASH = "—";
 
@@ -282,7 +284,7 @@ export function resolveStrings(overrides?: StationStringOverrides): StationStrin
 }
 
 /* Strings layer by MERGING, never replacing: a provider's overrides, a
- * WindStation root's, and a subcomponent's stack up, inner keys winning per
+ * StationCard root's, and a subcomponent's stack up, inner keys winning per
  * key with the same shallow nested-group rule resolveStrings applies. An
  * inner layer overriding one aria sentence keeps the outer layer's reasons. */
 export function mergeStringOverrides(
@@ -312,8 +314,9 @@ export type FormatTime = (date: Date) => string;
  * the SERVER's default locale into a shared instance. The hazard does not
  * fully vanish — `undefined` locale means "this runtime's default", which can
  * differ between the server pass and the client's hydration pass and change
- * rendered times. When markup must match across passes, pass an explicit
- * `locale` on StationFeedProvider (or your own formatTime). */
+ * rendered times. When markup must match across passes, pin the ambient
+ * provider to an explicit locale (StationFeedProvider's `locale` prop) or
+ * pass your own formatTime. */
 const timeFormats = new Map<string, Intl.DateTimeFormat>();
 
 function timeFormat(locale: string | undefined): Intl.DateTimeFormat {
@@ -330,9 +333,9 @@ export function defaultFormatTime(date: Date): string {
   return timeFormat(undefined).format(date);
 }
 
-/* The default hour:minute format pinned to one locale — what
- * StationFeedProvider builds from its `locale` prop. Memoized per locale so
- * the returned FormatTime is referentially stable across renders. */
+/* The default hour:minute format pinned to one locale — what an ambient
+ * provider builds from its `locale` setting. Memoized per locale so the
+ * returned FormatTime is referentially stable across renders. */
 const localeFormatTimes = new Map<string, FormatTime>();
 
 export function localeFormatTime(locale: string): FormatTime {

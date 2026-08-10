@@ -21,18 +21,23 @@
  *   attribute in m/s so the machine-readable number never rounds.
  * - No layout opinions: everything renders inline. */
 import { useEffect, useState } from "react";
-import { compassDirection, isCalm, speedBand } from "../../index.js";
-import type { SpeedUnit, Station } from "../../index.js";
-import { DirectionCell, roundSpeed, temperatureValue } from "../lib/cells.js";
+import { FRESHNESS_REEVALUATE_MS as REEVALUATE_MS } from "../../client/index.js";
 import {
-  EM_DASH,
-  defaultFormatTime,
-  mergeStringOverrides,
-  resolveStrings,
-} from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides, StationStrings } from "../lib/strings.js";
-import { thresholdsToMps } from "../lib/thresholds.js";
-import type { SpeedThresholds } from "../lib/thresholds.js";
+  compassDirection,
+  isCalm,
+  readingAgeMs,
+  resolveDisplay,
+  speedBand,
+  speedMpsOf,
+  updatedAtText,
+} from "../../index.js";
+import type { SpeedKind, SpeedUnit, Station } from "../../index.js";
+import { roundSpeed, temperatureValue } from "../../index.js";
+import { DirectionCell } from "../lib/cells.js";
+import { EM_DASH } from "../../index.js";
+import type { FormatTime, StationStringOverrides } from "../../index.js";
+import { thresholdsToMps } from "../../index.js";
+import type { SpeedThresholds } from "../../index.js";
 import {
   requireResolved,
   resolveStation,
@@ -69,22 +74,6 @@ function useResolvedStation(
 
 /* ---------- speeds ---------- */
 
-type SpeedKind = "average" | "gust" | "lull";
-
-/* Capability-false and null both dash: the capability gate keeps a station
- * that never measures gusts honest even if a lying value slipped through. */
-function speedMpsOf(station: Station, kind: SpeedKind): number | null {
-  if (station.status !== "ok") return null;
-  switch (kind) {
-    case "average":
-      return station.reading.averageMps;
-    case "gust":
-      return station.capabilities.gustLull ? station.reading.gustMps : null;
-    case "lull":
-      return station.capabilities.gustLull ? station.reading.lullMps : null;
-  }
-}
-
 function SpeedValue({
   component,
   kind,
@@ -94,8 +83,7 @@ function SpeedValue({
   strings: stringsProp,
 }: SpeedAtomProps & { component: string; kind: SpeedKind }) {
   const { context, station } = useResolvedStation(component, stationProp, stationId);
-  const unit = unitProp ?? context?.unit ?? "kmh";
-  const words = resolveStrings(mergeStringOverrides(context?.strings, stringsProp));
+  const { unit, words } = resolveDisplay(context, { strings: stringsProp, unit: unitProp });
   const mps = speedMpsOf(station, kind);
   return (
     <data className="meteo-value meteo-speed" value={mps ?? undefined}>
@@ -127,7 +115,7 @@ export function Lull(props: SpeedAtomProps) {
 /* One decimal with the degree word, the station table's format exactly. */
 export function Temperature({ station: stationProp, stationId, strings: stringsProp }: AtomProps) {
   const { context, station } = useResolvedStation("Temperature", stationProp, stationId);
-  const words = resolveStrings(mergeStringOverrides(context?.strings, stringsProp));
+  const { words } = resolveDisplay(context, { strings: stringsProp });
   const celsius =
     station.status === "ok" && station.capabilities.temperature
       ? station.reading.temperatureC
@@ -148,7 +136,7 @@ export function Temperature({ station: stationProp, stationId, strings: stringsP
 /* Sea-level corrected pressure off the conditions block, one decimal hPa. */
 export function Pressure({ station: stationProp, stationId, strings: stringsProp }: AtomProps) {
   const { context, station } = useResolvedStation("Pressure", stationProp, stationId);
-  const words = resolveStrings(mergeStringOverrides(context?.strings, stringsProp));
+  const { words } = resolveDisplay(context, { strings: stringsProp });
   const hpa =
     station.status === "ok" && station.capabilities.conditions
       ? (station.reading.conditions?.seaLevelPressureHpa ?? null)
@@ -176,7 +164,7 @@ export function Pressure({ station: stationProp, stationId, strings: stringsProp
  * "NW 305°" reads as weather, not letters (aria.direction phrases it). */
 export function Direction({ station: stationProp, stationId, strings: stringsProp }: AtomProps) {
   const { context, station } = useResolvedStation("Direction", stationProp, stationId);
-  const words = resolveStrings(mergeStringOverrides(context?.strings, stringsProp));
+  const { words } = resolveDisplay(context, { strings: stringsProp });
   const reading = station.status === "ok" ? station.reading : null;
   if (reading == null) {
     return <span className="meteo-direction">{EM_DASH}</span>;
@@ -203,20 +191,6 @@ export function Direction({ station: stationProp, stationId, strings: stringsPro
 
 /* ---------- updated-at ---------- */
 
-const MINUTE_MS = 60_000;
-const HOUR_MS = 3_600_000;
-/* Past ~6 hours "n hr ago" reads as noise; the absolute time says more. */
-const ABSOLUTE_AFTER_MS = 6 * HOUR_MS;
-const REEVALUATE_MS = 30_000;
-
-/* The relative-time vocabulary rides the strings module's `updated` group,
- * i18n-able like every other word. */
-function relativeWords(ageMs: number, words: StationStrings): string {
-  if (ageMs < MINUTE_MS) return words.updated.justNow;
-  const minutes = Math.floor(ageMs / MINUTE_MS);
-  if (minutes < 60) return words.updated.minutesAgo(minutes);
-  return words.updated.hoursAgo(Math.floor(ageMs / HOUR_MS));
-}
 
 /* Ticking relative age of the reading, re-judged every 30 seconds so a dead
  * feed visibly ages between polls; beyond ~6 hours it falls back to the
@@ -247,8 +221,10 @@ export function UpdatedAt({
   const servedAt = servedAtProp ?? context?.feed?.servedAt ?? null;
   const receivedAtMs =
     receivedAtMsProp !== undefined ? receivedAtMsProp : (context?.receivedAtMs ?? null);
-  const words = resolveStrings(mergeStringOverrides(context?.strings, stringsProp));
-  const formatTime = formatTimeProp ?? context?.formatTime ?? defaultFormatTime;
+  const { formatTime, words } = resolveDisplay(context, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+  });
   const [nowMs, setNowMs] = useState(() => receivedAtMs ?? Date.now());
   useEffect(() => {
     setNowMs(Date.now());
@@ -259,15 +235,12 @@ export function UpdatedAt({
   if (reading == null) {
     return <span className="meteo-updated">{EM_DASH}</span>;
   }
-  const observedMs = Date.parse(reading.observedAt);
-  /* Server-anchored when the anchor exists; the client clock otherwise. */
-  const ageMs =
-    servedAt != null && receivedAtMs != null
-      ? Math.max(0, Date.parse(servedAt) - observedMs) + Math.max(0, nowMs - receivedAtMs)
-      : Math.max(0, nowMs - observedMs);
+  /* Server-anchored when the anchor exists; the client clock otherwise —
+   * the shared readingAgeMs rule, worded by the shared updatedAtText. */
+  const ageMs = readingAgeMs({ observedAt: reading.observedAt, servedAt, receivedAtMs, nowMs });
   return (
     <time className="meteo-updated" dateTime={reading.observedAt}>
-      {ageMs >= ABSOLUTE_AFTER_MS ? formatTime(new Date(observedMs)) : relativeWords(ageMs, words)}
+      {updatedAtText(ageMs, reading.observedAt, words, formatTime)}
     </time>
   );
 }
@@ -298,12 +271,11 @@ export function BandChip({
   labels?: readonly string[];
 }) {
   const { context, station } = useResolvedStation("BandChip", stationProp, stationId);
-  const thresholds =
-    thresholdsProp === undefined ? context?.thresholds : (thresholdsProp ?? undefined);
-  const unit = unitProp ?? context?.unit ?? "kmh";
-  const words: StationStrings = resolveStrings(
-    mergeStringOverrides(context?.strings, stringsProp),
-  );
+  const { thresholds, unit, words } = resolveDisplay(context, {
+    strings: stringsProp,
+    thresholds: thresholdsProp,
+    unit: unitProp,
+  });
   const reading = station.status === "ok" ? station.reading : null;
   if (reading != null && isCalm(reading.averageMps)) {
     return <span className="meteo-band-chip">{words.calm}</span>;

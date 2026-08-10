@@ -1,0 +1,40 @@
+/* Page chrome only — every component's look comes from the package's
+ * styles.css tokens, exactly as in the react demo. */
+body {
+  margin: 0;
+  background: light-dark(#f5f4f0, #16181d);
+  color: light-dark(#1d222b, #e8e6e1);
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+.demo {
+  margin: 0 auto;
+  max-width: 60rem;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.demo-header h1 small {
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+.demo-controls {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.demo-section {
+  margin-top: 2.5rem;
+}
+
+.demo-section h2 {
+  font-size: 1rem;
+  opacity: 0.75;
+}
+
+.demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}

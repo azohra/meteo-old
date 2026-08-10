@@ -10,10 +10,9 @@
  * across a threshold boundary. The mount effect corrects to the real clock
  * immediately; effects run only on the client, after hydration. */
 import { useEffect, useState } from "react";
+import { FRESHNESS_REEVALUATE_MS } from "../../client/index.js";
 import { freshness } from "../../index.js";
 import type { FreshnessStatus, FreshnessThresholds } from "../../index.js";
-
-const REEVALUATE_MS = 30_000;
 
 export function useFreshness(
   observedAt: string | null | undefined,
@@ -24,7 +23,7 @@ export function useFreshness(
   const [nowMs, setNowMs] = useState(() => receivedAtMs ?? Date.now());
   useEffect(() => {
     setNowMs(Date.now());
-    const timer = window.setInterval(() => setNowMs(Date.now()), REEVALUATE_MS);
+    const timer = window.setInterval(() => setNowMs(Date.now()), FRESHNESS_REEVALUATE_MS);
     return () => window.clearInterval(timer);
   }, []);
   if (observedAt == null || servedAt == null || receivedAtMs == null) return null;

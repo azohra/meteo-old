@@ -10,17 +10,11 @@
  * drops the implicit ones. */
 import type { ReactNode } from "react";
 import type { SpeedUnit, Station } from "../../index.js";
-import { stationFreshnessThresholds } from "../../index.js";
+import { resolveDisplay, stationFreshnessThresholds } from "../../index.js";
 import { useFreshness } from "../hooks/useFreshness.js";
-import {
-  DirectionCell,
-  StationNameLink,
-  optionalSpeed,
-  roundSpeed,
-  temperatureText,
-} from "../lib/cells.js";
-import { defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides, StationStrings } from "../lib/strings.js";
+import { optionalSpeed, roundSpeed, temperatureText } from "../../index.js";
+import { DirectionCell, StationNameLink } from "../lib/cells.js";
+import type { FormatTime, StationStringOverrides, StationStrings } from "../../index.js";
 import { FreshnessBadge } from "./FreshnessBadge.js";
 import { requireResolved, useStationFeedContext } from "./StationFeedProvider.js";
 
@@ -59,17 +53,18 @@ export function StationTable({
   const servedAt = servedAtProp ?? context?.feed?.servedAt ?? null;
   const receivedAtMs =
     receivedAtMsProp !== undefined ? receivedAtMsProp : (context?.receivedAtMs ?? null);
-  const unit = unitProp ?? context?.unit ?? "kmh";
-  const strings = mergeStringOverrides(context?.strings, stringsProp);
-  const formatTime = formatTimeProp ?? context?.formatTime ?? defaultFormatTime;
-  const words = resolveStrings(strings);
+  const { formatTime, strings, unit, words } = resolveDisplay(context, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+    unit: unitProp,
+  });
   return (
     <div
       aria-label={words.aria.table(stations.length)}
-      className="wind-table"
+      className="meteo-station-table"
       role="table"
     >
-      <div className="wind-table-row wind-table-head wind-microlabel" role="row">
+      <div className="meteo-station-table-row meteo-station-table-head meteo-microlabel" role="row">
         <span role="columnheader">{words.table.station}</span>
         <span role="columnheader">{words.table.wind}</span>
         <span role="columnheader">{words.table.lull}</span>
@@ -78,7 +73,7 @@ export function StationTable({
         <span role="columnheader">{words.table.temp}</span>
         <span role="columnheader">{words.table.updated}</span>
       </div>
-      <div className="wind-table-body" role="rowgroup">
+      <div className="meteo-station-table-body" role="rowgroup">
         {stations.map((station) => (
           <TableRow
             formatTime={formatTime}
@@ -123,8 +118,8 @@ function TableRow({
     stationFreshnessThresholds(station),
   );
   return (
-    <div className="wind-table-row" data-status={station.status} role="row">
-      <span className="wind-table-station" role="cell">
+    <div className="meteo-station-table-row" data-status={station.status} role="row">
+      <span className="meteo-station-table-station" role="cell">
         <strong>
           <StationNameLink station={station} />
         </strong>
@@ -132,35 +127,35 @@ function TableRow({
       </span>
       {station.status === "ok" ? (
         <>
-          <span className="wind-table-wind" role="cell">
+          <span className="meteo-station-table-wind" role="cell">
             <strong>{roundSpeed(station.reading.averageMps, unit)}</strong>
             <small>{words.speedUnits[unit]}</small>
           </span>
-          <span className="wind-table-lull" role="cell">
+          <span className="meteo-station-table-lull" role="cell">
             {optionalSpeed(station.reading.lullMps, unit)}
           </span>
-          <span className="wind-table-gust" role="cell">
+          <span className="meteo-station-table-gust" role="cell">
             {optionalSpeed(station.reading.gustMps, unit)}
           </span>
-          <span className="wind-table-from" role="cell">
+          <span className="meteo-station-table-from" role="cell">
             <DirectionCell
               averageMps={station.reading.averageMps}
               directionDeg={station.reading.directionDeg}
               words={words}
             />
           </span>
-          <span className="wind-table-temp" role="cell">
+          <span className="meteo-station-table-temp" role="cell">
             {temperatureText(station.reading.temperatureC, words)}
           </span>
-          <span className="wind-table-updated" role="cell">
-            <span className="wind-table-time">
+          <span className="meteo-station-table-updated" role="cell">
+            <span className="meteo-station-table-time">
               {formatTime(new Date(station.reading.observedAt))}
             </span>
             {status != null && <FreshnessBadge status={status} strings={strings} />}
           </span>
         </>
       ) : (
-        <span className="wind-table-reason" role="cell">
+        <span className="meteo-station-table-reason" role="cell">
           {words.reasons[station.reason]}
         </span>
       )}

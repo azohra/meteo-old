@@ -10,16 +10,18 @@ that render it — natively, in your design system, with no vendor iframe.
 
 | Entry point | What it is |
 |---|---|
-| `@azohra/meteo/station` | The isomorphic root: the wire contract (zod), pure derivations (period stats, compass, freshness, unit and threshold conversion), and framework-free chart geometry. |
+| `@azohra/meteo/station` | The isomorphic root: the wire contract (zod), pure derivations (period stats, compass, freshness, unit and threshold conversion), framework-free chart and instrument geometry, and the shared display rules (strings, formatting, air sentences, display resolution, merge policy) every binding renders from. |
+| `@azohra/meteo/station/client` | The framework-free client data layer: `createJsonPoller` and the station stores (`createStationFeedStore`, `createStationCurrentStore`, `createStationStore`) every binding subscribes to. Client-only at runtime, import-safe anywhere. |
 | `@azohra/meteo/station/server` | Vendor adapters plus the custom-adapter interface and `defineStationAdapter`, data-level `loadStationFeed()` / `loadStationCurrent()`, and the mountable feed handler. Server-only, so it can never leak into a client bundle. |
-| `@azohra/meteo/station/react` | `StationFeedProvider`, polling hooks (`useStation`, `useStationFeed`, `useStationCurrent`), the component set — `WindStation`, `CurrentConditions`, `WindHistoryChart`, `TrendChart`, `WindRose`, `StationTable`, `StationStrip`, `AirMatrix`, `FreshnessBadge` — and an atoms layer of inline primitives (`Speed`, `Gust`, `Lull`, `Temperature`, `Pressure`, `Direction`, `UpdatedAt`, `BandChip`, `Dial`, `Sparkline`) for composing your own layouts. |
-| `@azohra/meteo/station/react/styles.css` | The default skin (an intentional side effect). |
+| `@azohra/meteo/station/react` | `StationFeedProvider`, polling hooks (`useStation`, `useStationFeed`, `useStationCurrent`), the component set — `StationCard`, `CurrentConditions`, `WindHistoryChart`, `TrendChart`, `WindRose`, `StationTable`, `StationStrip`, `AirMatrix`, `FreshnessBadge` — and an atoms layer of inline primitives (`Speed`, `Gust`, `Lull`, `Temperature`, `Pressure`, `Direction`, `UpdatedAt`, `BandChip`, `Dial`, `Sparkline`) for composing your own layouts. |
+| `@azohra/meteo/station/elements` | The same surface as light-DOM custom elements (`<meteo-station-feed>`, `<meteo-station-card>`, `<meteo-station-table>`, the charts, the atoms…) — a full peer of the react binding, framework-free, held byte-identical by a parity suite. `/register` is the auto-defining one-liner. |
+| `@azohra/meteo/station/styles.css` | The default skin (an intentional side effect), shared by both bindings. |
 
 ## Taste
 
 ```tsx
-import { StationFeedProvider, useStation, WindStation } from "@azohra/meteo/station/react";
-import "@azohra/meteo/station/react/styles.css";
+import { StationFeedProvider, useStation, StationCard } from "@azohra/meteo/station/react";
+import "@azohra/meteo/station/styles.css";
 
 function LiveWind() {
   const { feed, receivedAtMs } = useStation("/api/wind", "launch");
@@ -28,7 +30,7 @@ function LiveWind() {
     <div className="meteo-root">
       <StationFeedProvider feed={feed} receivedAtMs={receivedAtMs}
         thresholds={{ unit: "kmh", values: [12, 20, 28] }}>
-        <WindStation />
+        <StationCard />
       </StationFeedProvider>
     </div>
   );
@@ -44,7 +46,9 @@ Each page is the single authority for its topic:
 | [docs/getting-started.md](../docs/getting-started.md) | Install, mount the handler, render components, the data-level API |
 | [docs/wire-contract.md](../docs/wire-contract.md) | The document shape, semantics, evolution rules, HTTP protocol, freshness model |
 | [docs/adapters.md](../docs/adapters.md) | Custom adapters, `defineStationAdapter`, the rulebook, environment injection, caching, polling etiquette |
+| [docs/client-data.md](../docs/client-data.md) | The framework-free client layer: poller semantics, stores, cadence, the merge clock rule, display resolution |
 | [docs/react.md](../docs/react.md) | Provider, hooks, thresholds, composition, SSR seeding |
+| [docs/elements.md](../docs/elements.md) | The custom-elements binding: registration, the provider element, attributes vs properties, composition, client rendering |
 | [docs/theming.md](../docs/theming.md) | `.meteo-root` scoping, token tables, dark mode, `@layer` |
 
 JSON Schema for the wire documents lives in [`../schema/`](../schema/).

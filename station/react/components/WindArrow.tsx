@@ -7,7 +7,7 @@ export function WindArrow({ deg, size = 12 }: { deg: number; size?: number }) {
   return (
     <svg
       aria-hidden="true"
-      className="wind-arrow"
+      className="meteo-wind-arrow"
       height={size}
       style={{ transform: `rotate(${deg + 180}deg)` }}
       viewBox="0 0 16 16"

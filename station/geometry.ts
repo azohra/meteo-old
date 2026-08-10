@@ -331,10 +331,18 @@ export function windRose(
   };
 }
 
+/* Silence beyond this many declared periods is an outage, not a long
+ * sample — the one dropout tolerance the chart, the sparkline, and the
+ * trend all judge with. */
+export const HISTORY_GAP_TOLERANCE_FACTOR = 2.5;
+
 /* Dropout detection: a vendor expresses an outage as an absent record, never
  * a zeroed one, so gaps are found by comparing neighbours against the
  * declared period. Returns [startMs, endMs] pairs of silent spans. */
-export function historyGaps(history: History, toleranceFactor = 2.5): Array<[number, number]> {
+export function historyGaps(
+  history: History,
+  toleranceFactor = HISTORY_GAP_TOLERANCE_FACTOR,
+): Array<[number, number]> {
   const gaps: Array<[number, number]> = [];
   const limit = history.periodMinutes * 60_000 * toleranceFactor;
   for (let index = 1; index < history.points.length; index += 1) {
@@ -343,4 +351,72 @@ export function historyGaps(history: History, toleranceFactor = 2.5): Array<[num
     if (current - previous > limit) gaps.push([previous, current]);
   }
   return gaps;
+}
+
+/* Wide plots earn more vertical room than the core default; narrow ones keep
+ * the core's phone-sized frame. */
+export const CHART_WIDE_PLOT_HEIGHT = 160;
+export const CHART_WIDE_PLOT_MIN_WIDTH = 520;
+
+/* Stretch the core frame's plot without re-deriving its row math: every row
+ * below the plot shifts by the same delta. */
+export function stretchFrame(frame: ChartFrame, plotHeight: number): ChartFrame {
+  const delta = plotHeight - (frame.plotBottom - frame.plotTop);
+  if (delta === 0) return frame;
+  return {
+    ...frame,
+    height: frame.height + delta,
+    labelRow: frame.labelRow + delta,
+    plotBottom: frame.plotBottom + delta,
+    vaneRow: frame.vaneRow + delta,
+  };
+}
+
+/* ---------- the trend series ---------- */
+
+export type TrendSeries = "temperature" | "pressure";
+
+export function trendValueOf(point: HistoryPoint, series: TrendSeries): number | null {
+  return series === "temperature" ? point.temperatureC : (point.seaLevelPressureHpa ?? null);
+}
+
+/* Units are fixed per series — °C and hPa — which is why trend components
+ * take no speed `unit` prop at all. The padding keeps a flat afternoon from
+ * zooming sensor noise into drama. */
+export function trendSeriesPad(series: TrendSeries): number {
+  return series === "temperature" ? 1 : 2;
+}
+
+/* Runs of consecutive carrying samples as [ms, value] pairs; a null value or
+ * a dropout beyond the declared period's tolerance breaks the run, and the
+ * trace is never interpolated across either. A one-sample run is still a
+ * measurement (drawn as a dot). Each run remembers its first sample's
+ * observedAt: a timestamp names a run under a sliding window, where an index
+ * would churn. */
+export type TrendRun = { startedAt: string; samples: Array<readonly [number, number]> };
+
+export function trendRuns(
+  points: ReadonlyArray<HistoryPoint>,
+  series: TrendSeries,
+  periodMinutes: number,
+): TrendRun[] {
+  const gapLimitMs = periodMinutes * 60_000 * HISTORY_GAP_TOLERANCE_FACTOR;
+  const runs: TrendRun[] = [];
+  let run: TrendRun | null = null;
+  let previousMs = Number.NEGATIVE_INFINITY;
+  for (const point of points) {
+    const value = trendValueOf(point, series);
+    const ms = Date.parse(point.observedAt);
+    if ((value == null || ms - previousMs > gapLimitMs) && run != null) {
+      runs.push(run);
+      run = null;
+    }
+    if (value != null) {
+      run ??= { startedAt: point.observedAt, samples: [] };
+      run.samples.push([ms, value] as const);
+    }
+    previousMs = ms;
+  }
+  if (run != null) runs.push(run);
+  return runs;
 }

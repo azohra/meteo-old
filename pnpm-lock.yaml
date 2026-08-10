@@ -68,6 +68,19 @@ importers:
         specifier: ^6.0.0
         version: 6.4.3(@types/node@18.19.130)
 
+  examples/demo-elements:
+    dependencies:
+      '@azohra/meteo':
+        specifier: workspace:*
+        version: link:../..
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.3(@types/node@18.19.130)
+
 packages:
 
   '@asamuzakjp/css-color@3.2.0':

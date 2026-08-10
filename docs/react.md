@@ -5,33 +5,32 @@
 themed via the tokens in [theming.md](theming.md).
 
 ```ts
-import "@azohra/meteo/station/react/styles.css"; // the default skin (an intentional side effect)
+import "@azohra/meteo/station/styles.css"; // the default skin (an intentional side effect)
 ```
 
 ## Hooks
 
-Every hook takes the **mount base** (e.g. `"/api/wind"`) and builds its own
-route — nobody passes a full endpoint:
+The hooks are thin react shells over the shared
+[client data layer](client-data.md) (`@azohra/meteo/station/client`) — the
+polling semantics, cadence rules, merge clock rule, and structured errors
+are documented once there and owed to every binding identically. Every hook
+takes the **mount base** (e.g. `"/api/wind"`) and builds its own route —
+nobody passes a full endpoint:
 
 - `useStation(url, stationId, options)` → `{ feed, station, receivedAtMs, error, refresh }`.
-  Composes the two hooks below plus `mergeCurrent`, including the clock rule: a merged
-  current response advances `receivedAtMs`; a merge that didn't take (station unavailable,
-  or absent from the feed) keeps the feed's own clock.
+  Composes the two hooks below plus the `foldCurrent` merge-and-clock rule.
 - `useStationFeed(url, options)` → `{ feed, error, receivedAtMs, refresh }`. Polls
-  `${url}/feed` at the fastest `recommendedPollSeconds` any station advises;
-  visibility-gated; keeps the last good document on errors.
+  `${url}/feed` at the fleet's advised cadence.
 - `useStationCurrent(url, stationId, options)` polls `${url}/current?station=<id>`; fold
   it into the full feed with `mergeCurrent(feed, current)` — or just use `useStation`.
-- `error` is structured: `{ kind: "network", status? }` carries the HTTP status when a
-  response arrived; `{ kind: "contract", cause? }` carries the zod error (or JSON syntax
-  error) behind an unreadable body. Null while the last poll was clean.
 - Options: `pollSeconds`, `currentPollSeconds` (useStation), `enabled`, `fetchInit`
-  (headers, credentials, cache mode — the hook's own abort signal always wins), and
+  (its latest value rides every poll; the loop's own abort signal always wins), and
   `initialData`.
 
 `useFreshness(observedAt, servedAt, receivedAtMs, thresholds?)` grades an
 observation for display — the semantics are the wire contract's
-[freshness model](wire-contract.md#freshness-the-servedat-anchor).
+[freshness model](wire-contract.md#freshness-the-servedat-anchor), re-judged
+on the shared 30 s cadence.
 
 ## The provider
 
@@ -56,8 +55,10 @@ converted to the m/s wire once, internally (`thresholdsToMps`, exported from
 `@azohra/meteo/station` next to the other unit conversions) — chart guide
 labels print the numbers you declared, never round-tripped wire values.
 Inside a provider, `thresholds={null}` opts one component out of the ambient
-grading. Bands map to `wind-band-0..n` classes; the colours are
-[yours](theming.md#speed-bands-and-your-palette).
+grading — the omitted/value/null trichotomy is the shared
+[display-resolution rule](client-data.md#display-resolution--shared-across-bindings),
+applied identically by every binding. Bands map to `meteo-band-0..n` classes;
+the colours are [yours](theming.md#speed-bands-and-your-palette).
 
 ## Components
 
@@ -67,7 +68,7 @@ Per-station components take `station` (or `stationId`); fleet components take `s
 
 | Component | Props that matter |
 |---|---|
-| `WindStation` | The station card, a compound (below). `station`/`stationId`, `servedAt`, `receivedAtMs`, `thresholds`, `unit` |
+| `StationCard` | The station card, a compound (below). `station`/`stationId`, `servedAt`, `receivedAtMs`, `thresholds`, `unit` |
 | `CurrentConditions` | The instrument dial. Same props; calm hides the needle, outages grey the dial |
 | `WindHistoryChart` | Lull–gust band + graded mean. `thresholds` (guide labels show your declared numbers), `plotHeight` |
 | `TrendChart` | Temperature (°C) or sea-level pressure (hPa) over history. `series: "temperature" \| "pressure"`; null gaps break the trace, never interpolated. No `unit` — the units are the series' own |
@@ -82,7 +83,7 @@ the freshness badge.
 
 ### Composing the station card
 
-`WindStation` is a context provider: with **no children authored** it renders
+`StationCard` is a context provider: with **no children authored** it renders
 the full card (header, instrument, chart, summary); with children you say
 which pieces appear, in what order, without re-threading props. The trigger
 is `children === undefined` — authored children that evaluate to `false` or
@@ -90,23 +91,23 @@ is `children === undefined` — authored children that evaluate to `false` or
 condition going false never surprise-renders the whole default card. Each
 piece also accepts explicit props that override the card's context — one
 chart can wear its own thresholds. Pieces ride the root as properties and as
-flat named exports (`WindStationChart` et al., for toolchains that dislike
+flat named exports (`StationCardChart` et al., for toolchains that dislike
 dot-access across an RSC client boundary); rendering one outside
-`<WindStation>` throws.
+`<StationCard>` throws.
 
 ```tsx
-<WindStation stationId="launch" unit="knots">
-  <WindStation.Header />
-  <WindStation.Chart thresholds={{ unit: "knots", values: [6, 11, 15] }} />
-  <WindStation.Summary />
-</WindStation> {/* no instrument: the station table above already states the reading */}
+<StationCard stationId="launch" unit="knots">
+  <StationCard.Header />
+  <StationCard.Chart thresholds={{ unit: "knots", values: [6, 11, 15] }} />
+  <StationCard.Summary />
+</StationCard> {/* no instrument: the station table above already states the reading */}
 ```
 
 ### The rose's judgment ring
 
 `favorableDirections={[{ fromDeg: 260, toDeg: 340 }]}` (degrees FROM; sectors
 may wrap through north) draws a thin ring outside the rose's grid: favorable
-arcs in `--wind-favorable`, the remainder in `--wind-unfavorable`. The ring
+arcs in `--meteo-wind-favorable`, the remainder in `--meteo-wind-unfavorable`. The ring
 judges direction, the petals report distribution — the two never mix.
 
 ## Primitives

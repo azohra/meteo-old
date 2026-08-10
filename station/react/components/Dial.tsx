@@ -10,87 +10,39 @@
  * the needle — a vane's idle bearing would fabricate a direction — while the
  * measured speed stays in the hub, with the calm word centred above it
  * because the bare dial has no direction row to say it in. Unavailable greys
- * the dial and wears the reason in words. Geometry is fixed at the classic
- * 160-unit viewBox; `size` scales the rendered box, never the drawing math,
- * so every class keeps the proportions styles.css was written against. */
-import {
-  COMPASS_POINTS,
-  KMH_PER_MPS,
-  isCalm,
-  radians,
-  speedBand,
-  speedToMps,
-} from "../../index.js";
-import type { SpeedUnit, Station } from "../../index.js";
+ * the dial and wears the reason in words. All drawing math is the shared
+ * instrument geometry (station/instruments.ts): the viewBox stays 160 and
+ * `size` scales the rendered box, never the math, so every class keeps the
+ * proportions styles.css was written against. */
 import { useId } from "react";
-import { roundSpeed } from "../lib/cells.js";
-import { mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides } from "../lib/strings.js";
-import { thresholdsToMps } from "../lib/thresholds.js";
-import type { SpeedThresholds } from "../lib/thresholds.js";
+import {
+  DIAL_CARDINALS,
+  DIAL_CARDINAL_TICK_INNER,
+  DIAL_CENTRE,
+  DIAL_COUNTERWEIGHT_RADIUS,
+  DIAL_COUNTERWEIGHT_REACH,
+  DIAL_HUB_RADIUS,
+  DIAL_LETTER_RADIUS,
+  DIAL_RING_RADIUS,
+  DIAL_SIZE,
+  DIAL_TICK_INNER,
+  dialNeedlePoints,
+  dialPolar,
+  dialScaleMaxMps,
+  dialSpeedArcPath,
+  isCalm,
+  resolveDisplay,
+  roundSpeed,
+  speedBand,
+  thresholdsToMps,
+} from "../../index.js";
+import type { SpeedThresholds, SpeedUnit, Station } from "../../index.js";
+import type { FormatTime, StationStringOverrides } from "../../index.js";
 import {
   requireResolved,
   resolveStation,
   useStationFeedContext,
 } from "./StationFeedProvider.js";
-
-/* CurrentConditions' dial geometry, verbatim — the viewBox stays 160 so the
- * class vocabulary's stroke widths and font sizes keep their proportions. */
-const DIAL_SIZE = 160;
-const CENTRE = DIAL_SIZE / 2;
-const RING_RADIUS = 70;
-const TICK_INNER = 64;
-const CARDINAL_TICK_INNER = 58;
-const LETTER_RADIUS = 46;
-const HUB_RADIUS = 36;
-const NEEDLE_REACH = 60;
-const NEEDLE_HALF_WIDTH = 5;
-const COUNTERWEIGHT_RADIUS = 4.5;
-const COUNTERWEIGHT_REACH = 46;
-/* The arc scales against at least this (the historical 40 km/h floor,
- * expressed in wire m/s), so light air never fills the ring. */
-const DIAL_MIN_MAX_MPS = 40 / KMH_PER_MPS;
-
-const polar = (bearingDeg: number, radius: number): readonly [number, number] => {
-  const angle = radians(bearingDeg);
-  return [CENTRE + Math.sin(angle) * radius, CENTRE - Math.cos(angle) * radius];
-};
-
-const at = ([x, y]: readonly [number, number]) => `${x.toFixed(1)},${y.toFixed(1)}`;
-
-/* Filled tapered blade from the hub to the downwind rim; the counterweight
- * circle sits opposite, outside the hub. */
-function needleBlade(fromDeg: number): string {
-  const flowDeg = fromDeg + 180;
-  const tip = polar(flowDeg, NEEDLE_REACH);
-  const left = [
-    CENTRE + Math.sin(radians(flowDeg + 90)) * NEEDLE_HALF_WIDTH,
-    CENTRE - Math.cos(radians(flowDeg + 90)) * NEEDLE_HALF_WIDTH,
-  ] as const;
-  const right = [
-    CENTRE + Math.sin(radians(flowDeg - 90)) * NEEDLE_HALF_WIDTH,
-    CENTRE - Math.cos(radians(flowDeg - 90)) * NEEDLE_HALF_WIDTH,
-  ] as const;
-  return `${at(tip)} ${at(left)} ${at(right)}`;
-}
-
-/* Gauge arc clockwise from the scale start at N; fraction 1 closes the ring. */
-function speedArcPath(fraction: number): string {
-  const sweepDeg = Math.min(359.9, Math.max(0, fraction) * 360);
-  const start = polar(0, RING_RADIUS);
-  const end = polar(sweepDeg, RING_RADIUS);
-  return `M ${start[0].toFixed(1)} ${start[1].toFixed(1)} A ${RING_RADIUS} ${RING_RADIUS} 0 ${
-    sweepDeg > 180 ? 1 : 0
-  } 1 ${end[0].toFixed(1)} ${end[1].toFixed(1)}`;
-}
-
-/* Dial letters come from the same vocabulary compassDirection speaks. */
-const CARDINALS = [
-  { bearing: 0, letter: COMPASS_POINTS[0] },
-  { bearing: 90, letter: COMPASS_POINTS[4] },
-  { bearing: 180, letter: COMPASS_POINTS[8] },
-  { bearing: 270, letter: COMPASS_POINTS[12] },
-] as const;
 
 export function Dial({
   station: stationProp,
@@ -106,7 +58,7 @@ export function Dial({
   station?: Station;
   stationId?: string;
   /* Consumer-unit bounds ({ unit, values }); converted to wire m/s once. The
-   * speed arc wears wind-band-0..n of the current reading when given, the
+   * speed arc wears meteo-band-0..n of the current reading when given, the
    * neutral accent otherwise. null opts out of the provider's thresholds. */
   thresholds?: SpeedThresholds | null;
   /* Display unit only: every shown speed converts, banding and geometry stay
@@ -131,30 +83,22 @@ export function Dial({
     "station",
     stationProp ?? resolveStation(context, stationId),
   );
-  const thresholds = thresholdsProp === undefined ? context?.thresholds : (thresholdsProp ?? undefined);
-  const unit = unitProp ?? context?.unit ?? "kmh";
-  const strings = mergeStringOverrides(context?.strings, stringsProp);
+  const { thresholds, unit, words } = resolveDisplay(context, {
+    strings: stringsProp,
+    thresholds: thresholdsProp,
+    unit: unitProp,
+  });
 
-  const words = resolveStrings(strings);
   /* The shared rounding rule: shown speeds convert, the wire stays m/s. */
   const shown = (averageMps: number) => roundSpeed(averageMps, unit);
   const unitLabel = words.speedUnits[unit];
   /* useId can carry characters url(#…) references choke on. */
-  const bezelId = `wind-bezel-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  const bezelId = `meteo-bezel-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const reading = station.status === "ok" ? station.reading : null;
   const calm = reading != null && isCalm(reading.averageMps);
   const blowing = reading != null && !calm && reading.directionDeg != null;
 
-  /* Arc scale: a sane fixed floor, or the gust rounded up to the next nice
-   * DISPLAY-unit step (ten in the display unit, so a knots dial tops out at
-   * a round knots number) — the needle's ring never saturates on an
-   * ordinary day. */
-  const dialStepMps = speedToMps(10, unit);
-  const dialMax = Math.max(
-    DIAL_MIN_MAX_MPS,
-    Math.ceil(Math.max(reading?.gustMps ?? 0, reading?.averageMps ?? 0) / dialStepMps) *
-      dialStepMps,
-  );
+  const dialMax = dialScaleMaxMps(reading?.averageMps ?? null, reading?.gustMps ?? null, unit);
   const arcFraction = reading == null ? 0 : Math.min(1, Math.max(0, reading.averageMps) / dialMax);
   const boundsMps = thresholds == null ? null : thresholdsToMps(thresholds);
   const arcBand = reading != null && boundsMps != null ? speedBand(reading.averageMps, boundsMps) : null;
@@ -169,7 +113,7 @@ export function Dial({
   return (
     <svg
       aria-label={dialLabel}
-      className={station.status === "unavailable" ? "wind-dial wind-dial-unavailable" : "wind-dial"}
+      className={station.status === "unavailable" ? "meteo-wind-dial meteo-wind-dial-unavailable" : "meteo-wind-dial"}
       height={size}
       role="img"
       viewBox={`0 0 ${DIAL_SIZE} ${DIAL_SIZE}`}
@@ -178,27 +122,27 @@ export function Dial({
       <defs>
         {/* Stop colours live in CSS so the bezel rethemes with the rest. */}
         <radialGradient cx="50%" cy="42%" id={bezelId} r="68%">
-          <stop className="wind-dial-bezel-in" offset="55%" />
-          <stop className="wind-dial-bezel-out" offset="100%" />
+          <stop className="meteo-wind-dial-bezel-in" offset="55%" />
+          <stop className="meteo-wind-dial-bezel-out" offset="100%" />
         </radialGradient>
       </defs>
-      <circle className="wind-dial-face" cx={CENTRE} cy={CENTRE} r={RING_RADIUS} />
-      <circle className="wind-dial-bezel" cx={CENTRE} cy={CENTRE} fill={`url(#${bezelId})`} r={RING_RADIUS} />
-      <circle className="wind-dial-ring" cx={CENTRE} cy={CENTRE} r={RING_RADIUS} />
+      <circle className="meteo-wind-dial-face" cx={DIAL_CENTRE} cy={DIAL_CENTRE} r={DIAL_RING_RADIUS} />
+      <circle className="meteo-wind-dial-bezel" cx={DIAL_CENTRE} cy={DIAL_CENTRE} fill={`url(#${bezelId})`} r={DIAL_RING_RADIUS} />
+      <circle className="meteo-wind-dial-ring" cx={DIAL_CENTRE} cy={DIAL_CENTRE} r={DIAL_RING_RADIUS} />
       {reading != null && arcFraction > 0 && (
         <path
-          className={arcBand == null ? "wind-dial-arc" : `wind-dial-arc wind-band-${arcBand}`}
-          d={speedArcPath(arcFraction)}
+          className={arcBand == null ? "meteo-wind-dial-arc" : `meteo-wind-dial-arc meteo-band-${arcBand}`}
+          d={dialSpeedArcPath(arcFraction)}
         />
       )}
       {Array.from({ length: 16 }, (_, index) => {
         const bearing = index * 22.5;
         const cardinal = index % 4 === 0;
-        const [x1, y1] = polar(bearing, RING_RADIUS);
-        const [x2, y2] = polar(bearing, cardinal ? CARDINAL_TICK_INNER : TICK_INNER);
+        const [x1, y1] = dialPolar(bearing, DIAL_RING_RADIUS);
+        const [x2, y2] = dialPolar(bearing, cardinal ? DIAL_CARDINAL_TICK_INNER : DIAL_TICK_INNER);
         return (
           <line
-            className={cardinal ? "wind-dial-tick wind-dial-tick-cardinal" : "wind-dial-tick"}
+            className={cardinal ? "meteo-wind-dial-tick meteo-wind-dial-tick-cardinal" : "meteo-wind-dial-tick"}
             key={bearing}
             x1={x1}
             x2={x2}
@@ -207,29 +151,29 @@ export function Dial({
           />
         );
       })}
-      {CARDINALS.map(({ bearing, letter }) => {
-        const [x, y] = polar(bearing, LETTER_RADIUS);
+      {DIAL_CARDINALS.map(({ bearing, letter }) => {
+        const [x, y] = dialPolar(bearing, DIAL_LETTER_RADIUS);
         return (
-          <text className="wind-dial-letter" key={letter} textAnchor="middle" x={x} y={y + 3.5}>
+          <text className="meteo-wind-dial-letter" key={letter} textAnchor="middle" x={x} y={y + 3.5}>
             {letter}
           </text>
         );
       })}
       {blowing && reading.directionDeg != null && (
-        <g className="wind-needle">
-          <polygon className="wind-needle-blade" points={needleBlade(reading.directionDeg)} />
+        <g className="meteo-wind-needle">
+          <polygon className="meteo-wind-needle-blade" points={dialNeedlePoints(reading.directionDeg)} />
           <circle
-            className="wind-needle-counterweight"
-            cx={polar(reading.directionDeg, COUNTERWEIGHT_REACH)[0]}
-            cy={polar(reading.directionDeg, COUNTERWEIGHT_REACH)[1]}
-            r={COUNTERWEIGHT_RADIUS}
+            className="meteo-wind-needle-counterweight"
+            cx={dialPolar(reading.directionDeg, DIAL_COUNTERWEIGHT_REACH)[0]}
+            cy={dialPolar(reading.directionDeg, DIAL_COUNTERWEIGHT_REACH)[1]}
+            r={DIAL_COUNTERWEIGHT_RADIUS}
           />
         </g>
       )}
       {/* The hub sits over the needle so the reading owns the centre. */}
-      <circle className="wind-dial-hub" cx={CENTRE} cy={CENTRE} r={HUB_RADIUS} />
+      <circle className="meteo-wind-dial-hub" cx={DIAL_CENTRE} cy={DIAL_CENTRE} r={DIAL_HUB_RADIUS} />
       {reading == null ? (
-        <text className="wind-dial-reason" textAnchor="middle" x={CENTRE} y={CENTRE + 4}>
+        <text className="meteo-wind-dial-reason" textAnchor="middle" x={DIAL_CENTRE} y={DIAL_CENTRE + 4}>
           {words.notReporting}
         </text>
       ) : (
@@ -238,14 +182,14 @@ export function Dial({
            * direction row on the bare dial, the calm word rides the hub,
            * centred above the number in the reason text's quiet voice. */}
           {calm && calmWord && (
-            <text className="wind-dial-reason" textAnchor="middle" x={CENTRE} y={CENTRE - 22}>
+            <text className="meteo-wind-dial-reason" textAnchor="middle" x={DIAL_CENTRE} y={DIAL_CENTRE - 22}>
               {words.calm}
             </text>
           )}
-          <text className="wind-dial-speed" textAnchor="middle" x={CENTRE} y={CENTRE + 8}>
+          <text className="meteo-wind-dial-speed" textAnchor="middle" x={DIAL_CENTRE} y={DIAL_CENTRE + 8}>
             {shown(reading.averageMps)}
           </text>
-          <text className="wind-dial-unit" textAnchor="middle" x={CENTRE} y={CENTRE + 26}>
+          <text className="meteo-wind-dial-unit" textAnchor="middle" x={DIAL_CENTRE} y={DIAL_CENTRE + 26}>
             {unitLabel}
           </text>
         </>

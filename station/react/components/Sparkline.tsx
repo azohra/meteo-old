@@ -3,36 +3,36 @@
  * to a word-sized glyph. One <svg>, no axes, no labels, no interaction — a
  * sparkline earns its keep inside a sentence or a table cell.
  *
- * Honesty rules are the chart's, kept at miniature scale: the line breaks
- * across dropouts longer than 2.5 declared periods (historyGaps' tolerance),
+ * Honesty rules are the chart's, kept at miniature scale and computed by the
+ * shared instrument geometry (station/instruments.ts): the line breaks
+ * across dropouts longer than the declared period's tolerance (historyRuns),
  * the band only spans samples that actually carry the gust–lull pair and
- * breaks where the pair goes null, and nothing is ever interpolated across a
- * silence. Given consumer thresholds the trace is drawn per-segment wearing
- * wind-band-0..n from speedBand of each segment's mean, exactly the big
- * chart's grading. The y scale runs from zero to a padded window maximum;
- * a flat calm history sits on the floor instead of zooming noise into drama.
+ * breaks where the pair goes null (bandStrips), and nothing is ever
+ * interpolated across a silence. Given consumer thresholds the trace is
+ * drawn per-segment wearing meteo-band-0..n from speedBand of each segment's
+ * mean, exactly the big chart's grading. The y scale runs from zero to a
+ * padded window maximum; a flat calm history sits on the floor instead of
+ * zooming noise into drama.
  *
  * A station with no drawable history renders an em-dash placeholder span of
  * the same fixed box, so a refresh tick can never twitch layout. */
-import { speedBand } from "../../index.js";
+import {
+  EM_DASH,
+  bandStrips,
+  historyRuns,
+  resolveDisplay,
+  sparklineScale,
+  speedBand,
+  thresholdsToMps,
+} from "../../index.js";
 import type { HistoryPoint, SpeedUnit, Station } from "../../index.js";
-import { EM_DASH, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { StationStringOverrides } from "../lib/strings.js";
-import { thresholdsToMps } from "../lib/thresholds.js";
-import type { SpeedThresholds } from "../lib/thresholds.js";
+import type { StationStringOverrides } from "../../index.js";
+import type { SpeedThresholds } from "../../index.js";
 import {
   requireResolved,
   resolveStation,
   useStationFeedContext,
 } from "./StationFeedProvider.js";
-
-/* Same dropout tolerance historyGaps applies: silence beyond 2.5 declared
- * periods is an outage, not a long sample. */
-const GAP_TOLERANCE_FACTOR = 2.5;
-/* Half the stroke width, so a line riding the scale edge never clips. */
-const EDGE_INSET = 1;
-/* Headroom over the window maximum, so the trace never kisses the box top. */
-const MAX_PADDING = 1.1;
 
 const coordinate = (x: number, y: number) => `${x.toFixed(1)},${y.toFixed(1)}`;
 
@@ -55,8 +55,8 @@ export function Sparkline({
   /* The lull–gust band behind the trace; drawn only where the pair exists. */
   showBand?: boolean;
   /* Consumer-unit bounds ({ unit, values }); converted to wire m/s once. The
-   * trace is graded per-segment into wind-band-0..n when given, drawn as one
-   * --wind-mean polyline otherwise. null opts out of the provider's. */
+   * trace is graded per-segment into meteo-band-0..n when given, drawn as one
+   * --meteo-wind-mean polyline otherwise. null opts out of the provider's. */
   thresholds?: SpeedThresholds | null;
   /* Accepted for API symmetry with the other station components; a sparkline
    * prints no numbers, so the display unit is currently unused. */
@@ -70,8 +70,10 @@ export function Sparkline({
     "station",
     stationProp ?? resolveStation(context, stationId),
   );
-  const thresholds = thresholdsProp === undefined ? context?.thresholds : (thresholdsProp ?? undefined);
-  const words = resolveStrings(mergeStringOverrides(context?.strings, stringsProp));
+  const { thresholds, words } = resolveDisplay(context, {
+    strings: stringsProp,
+    thresholds: thresholdsProp,
+  });
   const label = words.aria.sparkline(station.name);
 
   const history = station.status === "ok" ? station.history : null;
@@ -93,63 +95,9 @@ export function Sparkline({
   }
 
   const points = history.points;
-  const first = points[0] as HistoryPoint;
-  const last = points[points.length - 1] as HistoryPoint;
-  const startMs = Date.parse(first.observedAt);
-  const durationMs = Math.max(1, Date.parse(last.observedAt) - startMs);
-  const top = points.reduce(
-    (max, point) => Math.max(max, point.gustMps ?? point.averageMps),
-    0,
-  );
-  /* Zero to a padded max; a dead-calm window scales against 1 m/s so a flat
-   * line sits on the floor rather than dividing by zero. */
-  const scaleMax = top > 0 ? top * MAX_PADDING : 1;
-  const xAt = (ms: number) =>
-    EDGE_INSET + ((ms - startMs) / durationMs) * (width - 2 * EDGE_INSET);
-  const yAt = (speedMps: number) =>
-    height - EDGE_INSET - (speedMps / scaleMax) * (height - 2 * EDGE_INSET);
-
-  /* Runs of consecutive samples; a dropout beyond the declared period's
-   * tolerance breaks the run, and the line never bridges the silence. Each
-   * run is keyed by its first sample's observedAt — a timestamp names a run
-   * under a sliding window where an index would churn. */
-  type Run = { startedAt: string; points: HistoryPoint[] };
-  const gapLimitMs = history.periodMinutes * 60_000 * GAP_TOLERANCE_FACTOR;
-  const runs: Run[] = [];
-  let run: Run | null = null;
-  let previousMs = Number.NEGATIVE_INFINITY;
-  for (const point of points) {
-    const ms = Date.parse(point.observedAt);
-    if (run != null && ms - previousMs > gapLimitMs) run = null;
-    if (run == null) {
-      run = { startedAt: point.observedAt, points: [] };
-      runs.push(run);
-    }
-    run.points.push(point);
-    previousMs = ms;
-  }
-
-  /* Band strips: within each run, stretches where the gust–lull pair exists.
-   * A null gust or lull ends the strip — a band over guessed extremes is a
-   * lie — while the average trace above carries on. */
-  type Strip = { startedAt: string; points: HistoryPoint[] };
-  const strips: Strip[] = [];
-  if (showBand) {
-    for (const segment of runs) {
-      let strip: Strip | null = null;
-      for (const point of segment.points) {
-        if (point.gustMps == null || point.lullMps == null) {
-          strip = null;
-          continue;
-        }
-        if (strip == null) {
-          strip = { startedAt: point.observedAt, points: [] };
-          strips.push(strip);
-        }
-        strip.points.push(point);
-      }
-    }
-  }
+  const { xAt, yAt } = sparklineScale(points, width, height);
+  const runs = historyRuns(points, history.periodMinutes);
+  const strips = showBand ? bandStrips(runs) : [];
 
   /* The ONE consumer-unit → wire conversion; everything below is m/s. */
   const boundsMps = thresholds == null ? null : thresholdsToMps(thresholds);
@@ -208,7 +156,7 @@ export function Sparkline({
             segment.points.length === 1
               ? [
                   <circle
-                    className={`meteo-sparkline-dot wind-band-${speedBand(
+                    className={`meteo-sparkline-dot meteo-band-${speedBand(
                       (segment.points[0] as HistoryPoint).averageMps,
                       boundsMps,
                     )}`}
@@ -225,7 +173,7 @@ export function Sparkline({
                   const band = speedBand((previous.averageMps + point.averageMps) / 2, boundsMps);
                   return (
                     <line
-                      className={`meteo-sparkline-segment wind-band-${band}`}
+                      className={`meteo-sparkline-segment meteo-band-${band}`}
                       key={point.observedAt}
                       x1={xAt(Date.parse(previous.observedAt))}
                       x2={xAt(Date.parse(point.observedAt))}

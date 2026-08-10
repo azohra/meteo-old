@@ -16,9 +16,9 @@ import {
   StationFeedProvider,
   StationStrip,
   TrendChart,
-  WindStation,
-  defaultStrings,
+  StationCard,
 } from "../react/index.js";
+import { defaultStrings } from "../index.js";
 import { BASE_MS, conditionsStation, downStation, feedFixture, okStation } from "./fixtures.js";
 
 const isoTime = (date: Date) => date.toISOString();
@@ -28,7 +28,7 @@ describe("server rendering", () => {
     const feed = feedFixture([okStation(), conditionsStation(), downStation()]);
     const html = renderToString(
       <div className="meteo-root">
-        <WindStation
+        <StationCard
           formatTime={isoTime}
           receivedAtMs={BASE_MS + 30_000}
           servedAt={feed.servedAt}
@@ -49,7 +49,7 @@ describe("server rendering", () => {
     expect(html.length).toBeGreaterThan(0);
     expect(html).toContain("Test Station");
     expect(html).toContain("meteo-air-trigger");
-    expect(html).toContain("wind-table");
+    expect(html).toContain("meteo-station-table");
     /* Like the wind chart, the trend renders its wrapper on the server and
      * defers drawing to the client's first measurement. */
     expect(html).toContain("meteo-trend");
@@ -66,7 +66,7 @@ describe("server rendering", () => {
           thresholds={{ unit: "kmh", values: [12, 20, 28] }}
           unit="knots"
         >
-          <WindStation />
+          <StationCard />
           <StationTable />
           <StationStrip />
           <AirMatrix />
@@ -75,27 +75,27 @@ describe("server rendering", () => {
     );
     /* The provider resolved the primary station and threaded the defaults. */
     expect(html).toContain("Test Station");
-    expect(html).toContain("wind-dial-arc wind-band-1");
+    expect(html).toContain("meteo-wind-dial-arc meteo-band-1");
     expect(html).toContain("meteo-strip");
     expect(html).toContain("meteo-air-trigger");
     expect(html).toContain(defaultStrings.freshness.live);
   });
 
-  it("renderToString handles a composed WindStation subset", () => {
+  it("renderToString handles a composed StationCard subset", () => {
     const feed = feedFixture([okStation()]);
     const html = renderToString(
-      <WindStation
+      <StationCard
         formatTime={isoTime}
         receivedAtMs={BASE_MS + 30_000}
         servedAt={feed.servedAt}
         station={okStation()}
       >
-        <WindStation.Chart />
-        <WindStation.Summary />
-      </WindStation>,
+        <StationCard.Chart />
+        <StationCard.Summary />
+      </StationCard>,
     );
-    expect(html).toContain("wind-summary");
-    expect(html).not.toContain("wind-dial");
+    expect(html).toContain("meteo-summary");
+    expect(html).not.toContain("meteo-wind-dial");
   });
 
   it("computes initial freshness from receivedAtMs, not the server's Date.now", () => {

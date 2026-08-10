@@ -1,5 +1,5 @@
 "use client";
-/* The composite card, as a compound component. <WindStation> is a context
+/* The composite card, as a compound component. <StationCard> is a context
  * provider carrying the station, the clocks (servedAt/receivedAtMs), and the
  * display settings; its pieces — Header, Instrument, Chart, Summary — read
  * that context so a consumer composes without re-threading props. The root's
@@ -15,13 +15,12 @@
  * every stat under the chart shares the chart's window. */
 import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-import { periodSummary, stationFreshnessThresholds } from "../../index.js";
+import { resolveDisplay, stationFreshnessThresholds, summaryEntries } from "../../index.js";
 import type { SpeedUnit, Station } from "../../index.js";
 import { useFreshness } from "../hooks/useFreshness.js";
-import { roundSpeed } from "../lib/cells.js";
-import { EM_DASH, defaultFormatTime, mergeStringOverrides, resolveStrings } from "../lib/strings.js";
-import type { FormatTime, StationStringOverrides } from "../lib/strings.js";
-import type { SpeedThresholds } from "../lib/thresholds.js";
+import { mergeStringOverrides } from "../../index.js";
+import type { FormatTime, StationStringOverrides } from "../../index.js";
+import type { SpeedThresholds } from "../../index.js";
 import { CurrentConditions } from "./CurrentConditions.js";
 import { FreshnessBadge } from "./FreshnessBadge.js";
 import {
@@ -31,7 +30,7 @@ import {
 } from "./StationFeedProvider.js";
 import { WindHistoryChart } from "./WindHistoryChart.js";
 
-type WindStationContextValue = {
+type StationCardContextValue = {
   station: Station;
   servedAt: string | null;
   receivedAtMs: number | null;
@@ -42,22 +41,22 @@ type WindStationContextValue = {
   formatTime: FormatTime;
 };
 
-const WindStationContext = createContext<WindStationContextValue | null>(null);
+const StationCardContext = createContext<StationCardContextValue | null>(null);
 
 /* A subcomponent outside the provider has no station to draw — that is a
  * wiring mistake, and silence would render a mystery blank. Say so. */
-function useWindStationContext(subcomponent: string): WindStationContextValue {
-  const context = useContext(WindStationContext);
+function useStationCardContext(subcomponent: string): StationCardContextValue {
+  const context = useContext(StationCardContext);
   if (context == null) {
     throw new Error(
-      `<WindStation.${subcomponent}> must render inside <WindStation> — ` +
+      `<StationCard.${subcomponent}> must render inside <StationCard> — ` +
         "the provider carries the station, clocks, and display settings.",
     );
   }
   return context;
 }
 
-function WindStationRoot({
+function StationCardRoot({
   station: stationProp,
   stationId,
   servedAt: servedAtProp,
@@ -92,48 +91,48 @@ function WindStationRoot({
 }) {
   const ambient = useStationFeedContext();
   const station = requireResolved(
-    "WindStation",
+    "StationCard",
     "station",
     stationProp ?? resolveStation(ambient, stationId),
   );
   const servedAt = servedAtProp ?? ambient?.feed?.servedAt ?? null;
   const receivedAtMs =
     receivedAtMsProp !== undefined ? receivedAtMsProp : (ambient?.receivedAtMs ?? null);
-  const thresholds =
-    thresholdsProp === undefined ? ambient?.thresholds : (thresholdsProp ?? undefined);
-  const unit = unitProp ?? ambient?.unit ?? "kmh";
-  const strings = mergeStringOverrides(ambient?.strings, stringsProp);
-  const formatTime = formatTimeProp ?? ambient?.formatTime ?? defaultFormatTime;
+  const { formatTime, strings, thresholds, unit } = resolveDisplay(ambient, {
+    formatTime: formatTimeProp,
+    strings: stringsProp,
+    thresholds: thresholdsProp,
+    unit: unitProp,
+  });
   return (
-    <WindStationContext.Provider
+    <StationCardContext.Provider
       value={{ station, servedAt, receivedAtMs, thresholds, unit, strings, formatTime }}
     >
-      <article className="wind-station" data-status={station.status}>
+      <article className="meteo-station-card" data-status={station.status}>
         {children === undefined ? (
           <>
-            <WindStationHeader />
-            <WindStationInstrument />
-            <WindStationChart />
-            <WindStationSummary />
+            <StationCardHeader />
+            <StationCardInstrument />
+            <StationCardChart />
+            <StationCardSummary />
           </>
         ) : (
           children
         )}
       </article>
-    </WindStationContext.Provider>
+    </StationCardContext.Provider>
   );
 }
 
 /* Identity, attribution, and the freshness badge. */
-export function WindStationHeader({
+export function StationCardHeader({
   strings,
 }: {
   strings?: StationStringOverrides;
 } = {}) {
-  const context = useWindStationContext("Header");
+  const context = useStationCardContext("Header");
   const { station, servedAt, receivedAtMs } = context;
-  const resolvedStrings = mergeStringOverrides(context.strings, strings);
-  const words = resolveStrings(resolvedStrings);
+  const { strings: resolvedStrings, words } = resolveDisplay(context, { strings });
   const status = useFreshness(
     station.reading?.observedAt ?? null,
     servedAt,
@@ -142,9 +141,9 @@ export function WindStationHeader({
   );
 
   return (
-    <header className="wind-station-header">
-      <div className="wind-station-identity">
-        <h3 className="wind-station-name">
+    <header className="meteo-station-card-header">
+      <div className="meteo-station-card-identity">
+        <h3 className="meteo-station-card-name">
           {station.pageUrl ? (
             <a href={station.pageUrl} rel="noreferrer" target="_blank">
               {station.name} ↗
@@ -153,11 +152,11 @@ export function WindStationHeader({
             station.name
           )}
         </h3>
-        <p className="wind-station-meta">
+        <p className="meteo-station-card-meta">
           {/* Attribution rides the header; the source label is display-only. */}
-          <span className="wind-station-source">{station.sourceLabel}</span>
+          <span className="meteo-station-card-source">{station.sourceLabel}</span>
           {station.elevationM != null && (
-            <span className="wind-station-elevation">
+            <span className="meteo-station-card-elevation">
               {" "}· {words.elevation(Math.round(station.elevationM))}
             </span>
           )}
@@ -170,7 +169,7 @@ export function WindStationHeader({
 
 /* The dial. A page whose station table already states the current reading
  * simply leaves this piece out of its composition. */
-export function WindStationInstrument({
+export function StationCardInstrument({
   thresholds,
   unit,
   strings,
@@ -182,7 +181,7 @@ export function WindStationInstrument({
   strings?: StationStringOverrides;
   formatTime?: FormatTime;
 } = {}) {
-  const context = useWindStationContext("Instrument");
+  const context = useStationCardContext("Instrument");
   const resolvedThresholds = thresholds === undefined ? context.thresholds : (thresholds ?? undefined);
   return (
     <CurrentConditions
@@ -199,7 +198,7 @@ export function WindStationInstrument({
   );
 }
 
-export function WindStationChart({
+export function StationCardChart({
   thresholds,
   unit,
   plotHeight,
@@ -213,7 +212,7 @@ export function WindStationChart({
   strings?: StationStringOverrides;
   formatTime?: FormatTime;
 } = {}) {
-  const context = useWindStationContext("Chart");
+  const context = useStationCardContext("Chart");
   const resolvedThresholds = thresholds === undefined ? context.thresholds : (thresholds ?? undefined);
   return (
     <WindHistoryChart
@@ -232,7 +231,7 @@ export function WindStationChart({
 /* Stats the instrument cannot measure are dropped rather than dashed: the
  * strip reads as a complete footnote, and a permanent hole says nothing. A
  * value the instrument measures but missed stays an em dash in place. */
-export function WindStationSummary({
+export function StationCardSummary({
   unit,
   strings,
   formatTime,
@@ -241,63 +240,27 @@ export function WindStationSummary({
   strings?: StationStringOverrides;
   formatTime?: FormatTime;
 } = {}) {
-  const context = useWindStationContext("Summary");
-  const words = resolveStrings(mergeStringOverrides(context.strings, strings));
-  const resolvedUnit = unit ?? context.unit;
-  const resolvedFormatTime = formatTime ?? context.formatTime;
+  const context = useStationCardContext("Summary");
+  const { formatTime: resolvedFormatTime, unit: resolvedUnit, words } = resolveDisplay(context, {
+    formatTime,
+    strings,
+    unit,
+  });
   const { station } = context;
 
-  const history = station.status === "ok" ? station.history : null;
-  const summary = history == null || history.points.length === 0 ? null : periodSummary(history);
+  /* The label/value strings are the shared summaryEntries rule, so every
+   * binding's strip prints the same characters over the same window. */
+  const summary = summaryEntries(station, resolvedUnit, words, resolvedFormatTime);
   if (summary == null) return null;
-
-  const capabilities = station.capabilities;
-  const shown = (averageMps: number) => roundSpeed(averageMps, resolvedUnit);
-  const unitLabel = words.speedUnits[resolvedUnit];
-  const entries: { label: string; value: string }[] = [
-    { label: words.averageLabel, value: `${shown(summary.averageMps)} ${unitLabel}` },
-    ...(capabilities.gustLull
-      ? [
-          {
-            label: words.peakLabel,
-            value:
-              summary.peakGustMps == null
-                ? EM_DASH
-                : `${shown(summary.peakGustMps)} ${unitLabel}${
-                    summary.peakGustAt == null
-                      ? ""
-                      : ` · ${resolvedFormatTime(new Date(summary.peakGustAt))}`
-                  }`,
-          },
-          {
-            label: words.minLabel,
-            value:
-              summary.lowestLullMps == null ? EM_DASH : `${shown(summary.lowestLullMps)} ${unitLabel}`,
-          },
-        ]
-      : []),
-    { label: words.windRunLabel, value: `${Math.round(summary.windRunKm)} ${words.km}` },
-    ...(capabilities.temperature
-      ? [
-          {
-            label: words.tempRangeLabel,
-            value:
-              summary.temperatureLowC == null || summary.temperatureHighC == null
-                ? EM_DASH
-                : `${summary.temperatureLowC.toFixed(1)}–${summary.temperatureHighC.toFixed(1)} ${words.degC}`,
-          },
-        ]
-      : []),
-  ];
 
   return (
     <dl
       aria-label={words.aria.summary(resolvedFormatTime(new Date(summary.periodEndedAt)))}
-      className="wind-summary"
+      className="meteo-summary"
     >
-      {entries.map((entry) => (
-        <div className="wind-summary-item" key={entry.label}>
-          <dt className="wind-microlabel">{entry.label}</dt>
+      {summary.entries.map((entry) => (
+        <div className="meteo-summary-item" key={entry.label}>
+          <dt className="meteo-microlabel">{entry.label}</dt>
           <dd>{entry.value}</dd>
         </div>
       ))}
@@ -305,12 +268,12 @@ export function WindStationSummary({
   );
 }
 
-/* Subcomponents ride the root as properties (WindStation.Chart) and as named
- * exports (WindStationChart) — the latter for consumers whose toolchain
+/* Subcomponents ride the root as properties (StationCard.Chart) and as named
+ * exports (StationCardChart) — the latter for consumers whose toolchain
  * dislikes property access across a client boundary. */
-export const WindStation = Object.assign(WindStationRoot, {
-  Header: WindStationHeader,
-  Instrument: WindStationInstrument,
-  Chart: WindStationChart,
-  Summary: WindStationSummary,
+export const StationCard = Object.assign(StationCardRoot, {
+  Header: StationCardHeader,
+  Instrument: StationCardInstrument,
+  Chart: StationCardChart,
+  Summary: StationCardSummary,
 });
