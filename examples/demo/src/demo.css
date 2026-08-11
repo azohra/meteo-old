@@ -1259,9 +1259,12 @@ body {
   padding: 1.5rem 1.6rem 1.3rem;
 }
 
+/* Body size on purpose: the atoms are built for running prose, and scaling
+ * them up only amplifies their internal seams. The demo IS a paragraph. */
 .demo-primitive-sentence .demo-sentence {
-  font-size: 1.45rem;
-  line-height: 1.5;
+  max-width: 62ch;
+  font-size: 1.02rem;
+  line-height: 1.7;
 }
 
 /* The markup that composed the sentence above it — output, then source. */

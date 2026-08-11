@@ -890,15 +890,18 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              {/* The composition: the same atoms, inline in one sentence —
-               * output first, the markup that composed it beneath. */}
+              {/* The composition: the same atoms, disappearing into an
+               * ordinary sentence — the sentence is YOURS, the readings are
+               * live. Body size on purpose: these are inline elements built
+               * to sit in running prose, and prose is where they're shown. */}
               <div className="demo-panel demo-primitive-sentence">
-                <h3>…and composed, inline in your own sentence</h3>
+                <h3>Composed — the atoms disappear into your own prose</h3>
                 <p className="demo-sentence">
-                  <Speed /> <Direction />, gusting <Gust />, <UpdatedAt />
+                  Right now at {primary?.name ?? "the launch"} it&rsquo;s blowing <Speed />{" "}
+                  from the <Direction />, gusting <Gust /> — updated <UpdatedAt />.
                 </p>
                 <code className="demo-sentence-source">
-                  {"<Speed /> <Direction />, gusting <Gust />, <UpdatedAt />"}
+                  {"Right now at {station.name} it's blowing <Speed /> from the <Direction />, gusting <Gust /> — updated <UpdatedAt />."}
                 </code>
               </div>
               <div className="demo-primitives-row">
