@@ -1252,3 +1252,129 @@ body {
   border-color: var(--meteo-accent, #0f7490);
   color: var(--meteo-accent, #0f7490);
 }
+
+/* ---- Primitives, given room: the sentence is the star ---- */
+
+.demo-primitive-sentence {
+  padding: 1.5rem 1.6rem 1.3rem;
+}
+
+.demo-primitive-sentence .demo-sentence {
+  font-size: 1.45rem;
+  line-height: 1.5;
+}
+
+/* The markup that composed the sentence above it — output, then source. */
+.demo-sentence-source {
+  display: block;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--meteo-border, #dbe2e9);
+  font-family: var(--demo-mono);
+  font-size: 0.76rem;
+  color: var(--meteo-muted, #62717f);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+/* Chips and dials pair up instead of stacking as lone crates. */
+.demo-primitives-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.1rem;
+}
+
+.demo-primitives-row .demo-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-primitives-row .demo-chip-row,
+.demo-primitives-row .demo-dials {
+  flex: 1;
+  align-content: center;
+}
+
+/* ---- The specimen table: one atom per labeled cell ---- */
+
+.demo-specimens {
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.demo-specimen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin: 0 -1.1rem;
+  border-top: 1px solid var(--meteo-border, #dbe2e9);
+}
+
+.demo-specimen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem 1.1rem 1rem;
+  border-right: 1px solid var(--meteo-border, #dbe2e9);
+  border-bottom: 1px solid var(--meteo-border, #dbe2e9);
+  margin-bottom: -1px; /* the outer card clips the last row's rule */
+}
+
+.demo-specimen > code {
+  font-family: var(--demo-mono);
+  font-size: 0.7rem;
+  color: var(--meteo-muted, #62717f);
+}
+
+.demo-specimen-value {
+  font-size: 1.05rem;
+  min-height: 1.6rem;
+  display: flex;
+  align-items: center;
+}
+
+/* ---- Chips with names: a labeled list, never an anonymous cluster ---- */
+
+.demo-chip-list {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.demo-chip-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px dashed var(--meteo-border, #dbe2e9);
+}
+
+.demo-chip-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.demo-chip-item > span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--meteo-ink, #17232e);
+}
+
+/* ---- Dials as captioned figures, with air between them ---- */
+
+.demo-dials {
+  gap: 2.5rem;
+}
+
+.demo-dial-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.demo-dial-figure figcaption {
+  font-family: var(--demo-mono);
+  font-size: 0.7rem;
+  color: var(--meteo-muted, #62717f);
+}

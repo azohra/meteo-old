@@ -32,6 +32,8 @@ import {
   Dial,
   Direction,
   Gust,
+  Lull,
+  Temperature,
   Sparkline,
   Speed,
   StationTable,
@@ -287,7 +289,7 @@ const SECTIONS: { id: string; title: string; nav: string; note: string }[] = [
     id: "primitives",
     title: "Primitives",
     nav: "Primitives",
-    note: "The atoms compose inline in your own sentence; BandChip wears the club's vocabulary; Sparkline rides beside StationStrip in the classic board-row pairing; the bare Dial scales without redrawing.",
+    note: "The smallest pieces, one at a time — then composed. Every atom is a plain inline element you can drop into your own markup.",
   },
   {
     id: "explicit",
@@ -846,23 +848,87 @@ export default function App() {
           <section className="demo-section" id="primitives">
             <SectionHead id="primitives" />
             <div className="demo-primitives">
-              <div className="demo-panel demo-panel-compact">
-                <h3>Atoms in a sentence — the feed's primary station</h3>
+              {/* The catalog: every atom in its own labeled cell — a type
+               * specimen, never a junk pile. Each cell names the markup and
+               * shows exactly what it renders, one atom at a time. */}
+              <div className="demo-panel demo-specimens">
+                <h3>The atoms — the feed's primary station, one element at a time</h3>
+                <div className="demo-specimen-grid">
+                  <div className="demo-specimen">
+                    <code>{"<Speed />"}</code>
+                    <div className="demo-specimen-value"><Speed /></div>
+                  </div>
+                  <div className="demo-specimen">
+                    <code>{"<Gust />"}</code>
+                    <div className="demo-specimen-value"><Gust /></div>
+                  </div>
+                  <div className="demo-specimen">
+                    <code>{"<Lull />"}</code>
+                    <div className="demo-specimen-value"><Lull /></div>
+                  </div>
+                  <div className="demo-specimen">
+                    <code>{"<Direction />"}</code>
+                    <div className="demo-specimen-value"><Direction /></div>
+                  </div>
+                  <div className="demo-specimen">
+                    <code>{"<Temperature />"}</code>
+                    <div className="demo-specimen-value"><Temperature /></div>
+                  </div>
+                  <div className="demo-specimen">
+                    <code>{"<UpdatedAt />"}</code>
+                    <div className="demo-specimen-value"><UpdatedAt /></div>
+                  </div>
+                  <div className="demo-specimen">
+                    <code>{"<BandChip labels />"}</code>
+                    <div className="demo-specimen-value">
+                      <BandChip labels={CHIP_LABELS} thresholds={CHIP_THRESHOLDS} />
+                    </div>
+                  </div>
+                  <div className="demo-specimen">
+                    <code>{"<Sparkline />"}</code>
+                    <div className="demo-specimen-value"><Sparkline /></div>
+                  </div>
+                </div>
+              </div>
+              {/* The composition: the same atoms, inline in one sentence —
+               * output first, the markup that composed it beneath. */}
+              <div className="demo-panel demo-primitive-sentence">
+                <h3>…and composed, inline in your own sentence</h3>
                 <p className="demo-sentence">
                   <Speed /> <Direction />, gusting <Gust />, <UpdatedAt />
                 </p>
+                <code className="demo-sentence-source">
+                  {"<Speed /> <Direction />, gusting <Gust />, <UpdatedAt />"}
+                </code>
               </div>
-              <div className="demo-panel demo-panel-compact">
-                <h3>Band chips — five words over 5 · 12 · 20 · 28 km/h</h3>
-                <div className="demo-chip-row">
-                  {feed.stations.map((station) => (
-                    <BandChip
-                      key={station.id}
-                      labels={CHIP_LABELS}
-                      stationId={station.id}
-                      thresholds={CHIP_THRESHOLDS}
-                    />
-                  ))}
+              <div className="demo-primitives-row">
+                <div className="demo-panel">
+                  <h3>Band chips across the fleet — five words over 5 · 12 · 20 · 28 km/h</h3>
+                  <div className="demo-chip-list">
+                    {feed.stations.map((station) => (
+                      <div className="demo-chip-item" key={station.id}>
+                        <span>{station.name}</span>
+                        <BandChip
+                          labels={CHIP_LABELS}
+                          stationId={station.id}
+                          thresholds={CHIP_THRESHOLDS}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="demo-panel">
+                  <h3>The bare dial — one 160-unit drawing, any size</h3>
+                  <div className="demo-dials">
+                    <figure className="demo-dial-figure">
+                      <Dial size={120} stationId="launch-ridge" />
+                      <figcaption>size={"{120}"}</figcaption>
+                    </figure>
+                    <figure className="demo-dial-figure">
+                      <Dial size={200} stationId="launch-ridge" />
+                      <figcaption>size={"{200}"}</figcaption>
+                    </figure>
+                  </div>
                 </div>
               </div>
               <div className="demo-panel">
@@ -874,13 +940,6 @@ export default function App() {
                       <Sparkline stationId={station.id} />
                     </div>
                   ))}
-                </div>
-              </div>
-              <div className="demo-panel demo-panel-compact">
-                <h3>The bare dial, two sizes — same 160-unit drawing</h3>
-                <div className="demo-dials">
-                  <Dial size={120} stationId="launch-ridge" />
-                  <Dial size={200} stationId="launch-ridge" />
                 </div>
               </div>
             </div>
