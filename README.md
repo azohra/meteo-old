@@ -71,7 +71,7 @@ into one day. **[See it live →](https://azohra.github.io/meteo/)**
 <table>
   <tr>
     <td width="33%" align="center"><img src="assets/gallery-dial.svg" alt="CurrentConditions: instrument dial with banded speed arc"></td>
-    <td width="33%" align="center"><img src="assets/gallery-chart.svg" alt="WindHistoryChart: graded average, lull-gust band, vane row"></td>
+    <td width="33%" align="center"><img src="assets/gallery-chart.svg" alt="WindHistoryChart: graded average, lull-gust band, and a persistent compass-letter and Avg row above every vane"></td>
     <td width="33%" align="center"><img src="assets/gallery-rose.svg" alt="WindRose: banded petals and calm share"></td>
   </tr>
   <tr>
@@ -87,7 +87,7 @@ into one day. **[See it live →](https://azohra.github.io/meteo/)**
   <tr>
     <td width="33%" align="center"><img src="assets/gallery-table.svg" alt="StationTable: three stations, one degraded honestly"></td>
     <td width="33%" align="center"><img src="assets/gallery-rose-season.svg" alt="WindRose filtered to summer midday, fourteen months of history behind it"></td>
-    <td width="33%" align="center"><img src="assets/gallery-daily-pattern.svg" alt="DailyPattern: a typical day, vector-averaged across fourteen months"></td>
+    <td width="33%" align="center"><img src="assets/gallery-daily-pattern.svg" alt="DailyPattern: a typical day, vector-averaged across fourteen months, with a persistent compass-letter and Avg row (dashed for a void slot)"></td>
   </tr>
   <tr>
     <td align="center"><sub><code>StationTable</code></sub></td>

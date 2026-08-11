@@ -70,10 +70,10 @@ Per-station components take `station` (or `stationId`); fleet components take `s
 |---|---|
 | `StationCard` | The station card, a compound (below). `station`/`stationId`, `servedAt`, `receivedAtMs`, `thresholds`, `unit` |
 | `CurrentConditions` | The instrument dial. Same props; calm hides the needle, outages grey the dial |
-| `WindHistoryChart` | Lull–gust band + graded mean. `thresholds` (guide labels show your declared numbers), `plotHeight` |
+| `WindHistoryChart` | Lull–gust band + graded mean, a persistent compass-letter row and Avg row above/below every vane. `thresholds` (guide labels show your declared numbers), `plotHeight`, `windowHours` (slices to the trailing N hours of the SAME points, no new fetch), `compareOffsetDays` (`1 \| 2 \| 3`; overlays a prior day's trace shifted onto today's own x-axis, absent when history doesn't reach back far enough) |
 | `TrendChart` | Temperature (°C) or sea-level pressure (hPa) over history. `series: "temperature" \| "pressure"`; null gaps break the trace, never interpolated. No `unit` — the units are the series' own |
 | `WindRose` | Direction shares. `station`/`stationId` or raw `points`, `sectorCount`, `thresholds`, `favorableDirections`. No `unit` — the rose shows percentages |
-| `DailyPattern` | A typical day: every point bucketed by time-of-day and vector-averaged. `station`/`stationId` or raw `points`, `slotMinutes` (default 180), `utcOffsetMinutes`, `thresholds` |
+| `DailyPattern` | A typical day: every point bucketed by time-of-day and vector-averaged, with a persistent compass-letter row and Avg row (dashed for a slot nothing ever fell into). `station`/`stationId` or raw `points`, `slotMinutes` (default 180), `utcOffsetMinutes`, `thresholds` |
 | `StationTable` | One row per `stations` entry; unavailable rows keep their geometry. `servedAt`, `receivedAtMs`, `stationMeta` — the sub-label under each name (default: the source attribution; render the sampling window, a distance, anything the station itself can say) |
 | `StationStrip` | One station on one line — name, wind, lull/gust, FROM, temp, updated + freshness. `station`/`stationId`, `servedAt`, `receivedAtMs`. Absent values dash in place; a capability the station lacks omits its cell; an unavailable station keeps the line, reason in words |
 | `AirMatrix` | Humidity → lightning behind a live disclosure; columns only for conditions-capable `stations` |

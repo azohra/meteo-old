@@ -158,6 +158,8 @@ ${perBand(".meteo-wind-threshold-label", "fill")}
 .meteo-wind-mean-segment{fill:none;stroke-width:3.5;stroke-linecap:round}
 ${perBand(".meteo-wind-mean-segment", "stroke")}
 .meteo-wind-row-label{font-size:9px;letter-spacing:0.08em}
+.meteo-wind-vane-label{font-size:9px}
+.meteo-wind-vane-value{font-size:9px}
 .meteo-wind-vane{fill:none;stroke:${t.vane};stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .meteo-wind-gap-hatch{stroke:${t.gap};stroke-width:1.25}
 .meteo-wind-rose-grid{fill:none;stroke:${t.grid};stroke-width:1}
@@ -452,6 +454,24 @@ function chartSvg({ points, periodMinutes, thresholds, width, x, y, idPrefix }) 
         : `<path class="meteo-wind-vane" d="${core.vanePath(scales.xAtMs(vane.midMs), frame.vaneRow, vane.directionDeg)}"/>`,
     );
   }
+  /* The persistent compass-letter row and Avg row: the same two additions
+   * WindHistoryChart/DailyPattern now render, so the gallery images stay
+   * true to what the library actually draws. */
+  for (const vane of vanes) {
+    parts.push(
+      text(
+        scales.xAtMs(vane.midMs),
+        frame.vaneLabelRow + 4,
+        "meteo-wind-vane-label",
+        vane.directionDeg == null ? "—" : core.compassDirection(vane.directionDeg),
+        "middle",
+      ),
+    );
+  }
+  parts.push(text(frame.left - 8, frame.valueRow + 4, "meteo-wind-row-label", words.avgLabel, "end"));
+  for (const vane of vanes) {
+    parts.push(text(scales.xAtMs(vane.midMs), frame.valueRow + 4, "meteo-wind-vane-value", shownKmh(vane.averageMps), "middle"));
+  }
   for (const tick of core.vaneTicks(vanes, scales)) {
     const anchor = tick.index === 0 ? "start" : tick.index === 4 ? "end" : "middle";
     parts.push(text(tick.x, frame.labelRow, "meteo-tick", fmtTime(tick.timeMs), anchor));
@@ -545,6 +565,33 @@ function dailyPatternSvg({ points, slotMinutes, thresholds, width, x, y, idPrefi
       vane.directionDeg == null
         ? text(scales.xAtMs(vane.midMs), frame.vaneRow + 4, "meteo-wind-vane-calm", "—", "middle")
         : `<path class="meteo-wind-vane" d="${core.vanePath(scales.xAtMs(vane.midMs), frame.vaneRow, vane.directionDeg)}"/>`,
+    );
+  }
+  /* The persistent compass-letter row and Avg row (dashed for a void slot —
+   * nothing this fixture ever recorded at that time of day), mirroring the
+   * real DailyPattern component. */
+  for (const vane of vanes) {
+    parts.push(
+      text(
+        scales.xAtMs(vane.midMs),
+        frame.vaneLabelRow + 4,
+        "meteo-wind-vane-label",
+        vane.directionDeg == null ? "—" : core.compassDirection(vane.directionDeg),
+        "middle",
+      ),
+    );
+  }
+  parts.push(text(frame.left - 8, frame.valueRow + 4, "meteo-wind-row-label", words.avgLabel, "end"));
+  for (const vane of vanes) {
+    const voidWindow = slots.slice(vane.startIndex, vane.endIndex).every((slot) => slot.sampleCount === 0);
+    parts.push(
+      text(
+        scales.xAtMs(vane.midMs),
+        frame.valueRow + 4,
+        "meteo-wind-vane-value",
+        voidWindow ? "—" : shownKmh(vane.averageMps),
+        "middle",
+      ),
     );
   }
   for (const tick of core.vaneTicks(vanes, scales)) {

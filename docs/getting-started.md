@@ -207,6 +207,23 @@ points into `<DailyPattern points={...} />` (or `station={...}`, which also
 turns the caption into a true coverage fraction via the station's own
 `periodMinutes` instead of a bare sample count) and it buckets internally.
 
+`WindHistoryChart`'s `windowHours` and `compareOffsetDays` props (react.md /
+elements.md) are themselves built from two more pure, exported functions —
+re-slicing the SAME already-fetched `points`, never a new fetch:
+
+```ts
+import {
+  windowPoints,       // (points, hours?) => ReadonlyArray<HistoryPoint> — trailing N hours; hours omitted is a no-op
+  compareWindow,       // (points, offsetDays, windowHours?) => HistoryPoint[] | null — a prior period's own span, re-sliced from `points`; null when history doesn't reach back far enough
+  compareTracePoints, // (comparePoints, scales, offsetDays) => string — the compare trace's coordinates, shifted onto the CURRENT chart's own x-axis
+} from "@azohra/meteo/station";
+```
+
+`compareWindow` is honest about coverage, not just presence: the matched
+span's own edges must land within one typical sample period (scaled by the
+same `HISTORY_GAP_TOLERANCE_FACTOR` an outage is judged by) of the window
+asked for, or it returns `null` rather than a two-point ghost of a trace.
+
 ## Where next
 
 | Topic | Page |

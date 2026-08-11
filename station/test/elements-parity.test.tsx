@@ -14,7 +14,7 @@ import { fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
 import { defaultStrings } from "../index.js";
-import type { Station } from "../index.js";
+import type { HistoryPoint, Station } from "../index.js";
 import {
   AirMatrix,
   BandChip,
@@ -442,9 +442,14 @@ describe("parity: composites", () => {
 
 describe("parity: charts (fallback width, initial render)", () => {
   it("WindHistoryChart — plain, banded in knots, calm, thin history, no capability", () => {
-    expectParity(<WindHistoryChart station={okStation()} />, "meteo-wind-history-chart", (el) => {
+    const plain = renderBoth(<WindHistoryChart station={okStation()} />, "meteo-wind-history-chart", (el) => {
       el.station = okStation();
     });
+    expect(plain.elementDom).toBe(plain.reactDom);
+    /* The persistent compass-letter row and Avg-value row: always visible,
+     * never only in the hover-only readout. */
+    expect(plain.reactDom).toContain("meteo-wind-vane-label");
+    expect(plain.reactDom).toContain("meteo-wind-vane-value");
     expectParity(
       <WindHistoryChart station={okStation()} thresholds={thresholds} unit="knots" />,
       "meteo-wind-history-chart",
@@ -475,9 +480,16 @@ describe("parity: charts (fallback width, initial render)", () => {
           })),
         },
       });
-    expectParity(<WindHistoryChart station={calmHistory()} />, "meteo-wind-history-chart", (el) => {
+    const calm = renderBoth(<WindHistoryChart station={calmHistory()} />, "meteo-wind-history-chart", (el) => {
       el.station = calmHistory();
     });
+    expect(calm.elementDom).toBe(calm.reactDom);
+    /* Calm withholds direction by definition: the persistent compass-letter
+     * cell dashes exactly like the vane arrow it sits above already does. */
+    expect(calm.reactDom).toContain(`class="meteo-wind-vane-label" text-anchor="middle"`);
+    expect(calm.reactDom.match(/class="meteo-wind-vane-label"[^>]*>"—"</g)?.length).toBe(
+      calm.reactDom.match(/class="meteo-wind-vane-calm"/g)?.length,
+    );
     const thin = () => okStation({ history: { periodMinutes: 10, points: makePoints(1) } });
     expectParity(<WindHistoryChart station={thin()} />, "meteo-wind-history-chart", (el) => {
       el.station = thin();
@@ -495,6 +507,76 @@ describe("parity: charts (fallback width, initial render)", () => {
     );
     expect(reactDom).toBe("");
     expect(elementDom).toBe("");
+  });
+
+  it("WindHistoryChart — windowHours slices the display; compareOffsetDays overlays a prior day only when history covers it", () => {
+    const denseStation = () => okStation({ history: { periodMinutes: 5, points: makePoints(84) } });
+    /* 400 five-minute samples is a bit over 33 hours — enough to cover a
+     * -1-day compare of a 6-hour display window (30 hours back at most). */
+    const deepStation = () => okStation({ history: { periodMinutes: 5, points: makePoints(400) } });
+
+    expectParity(
+      <WindHistoryChart station={denseStation()} windowHours={6} />,
+      "meteo-wind-history-chart",
+      (el) => {
+        el.station = denseStation();
+        el.setAttribute("window-hours", "6");
+      },
+    );
+    /* A real narrowing, not a no-op prop nobody exercises. */
+    const full = renderBoth(<WindHistoryChart station={denseStation()} />, "meteo-wind-history-chart", (el) => {
+      el.station = denseStation();
+    });
+    const windowed = renderBoth(
+      <WindHistoryChart station={denseStation()} windowHours={6} />,
+      "meteo-wind-history-chart",
+      (el) => {
+        el.station = denseStation();
+        el.setAttribute("window-hours", "6");
+      },
+    );
+    expect(windowed.reactDom).not.toBe(full.reactDom);
+
+    /* Present: history reaches back far enough to cover the requested
+     * offset. */
+    const overlaid = renderBoth(
+      <WindHistoryChart compareOffsetDays={1} station={deepStation()} windowHours={6} />,
+      "meteo-wind-history-chart",
+      (el) => {
+        el.station = deepStation();
+        el.setAttribute("compare-offset-days", "1");
+        el.setAttribute("window-hours", "6");
+      },
+    );
+    expect(overlaid.elementDom).toBe(overlaid.reactDom);
+    expect(overlaid.reactDom).toContain("meteo-wind-compare");
+
+    /* Absent because omitted: no prop, no overlay, identical in both
+     * bindings. */
+    const omitted = renderBoth(
+      <WindHistoryChart station={deepStation()} windowHours={6} />,
+      "meteo-wind-history-chart",
+      (el) => {
+        el.station = deepStation();
+        el.setAttribute("window-hours", "6");
+      },
+    );
+    expect(omitted.elementDom).toBe(omitted.reactDom);
+    expect(omitted.reactDom).not.toContain("meteo-wind-compare");
+
+    /* Absent because the station's own history does not reach back far
+     * enough — never a fabricated short trace, in either binding. */
+    const tooShallow = renderBoth(
+      <WindHistoryChart compareOffsetDays={1} station={denseStation()} windowHours={6} />,
+      "meteo-wind-history-chart",
+      (el) => {
+        el.station = denseStation();
+        el.setAttribute("compare-offset-days", "1");
+        el.setAttribute("window-hours", "6");
+      },
+    );
+    expect(tooShallow.elementDom).toBe(tooShallow.reactDom);
+    expect(tooShallow.reactDom).not.toContain("meteo-wind-compare");
   });
 
   it("TrendChart — temperature, pressure (not measured), thin history", () => {
@@ -537,9 +619,12 @@ describe("parity: charts (fallback width, initial render)", () => {
           })),
         },
       });
-    expectParity(<DailyPattern station={dailyPatternStation()} />, "meteo-daily-pattern", (el) => {
+    const base = renderBoth(<DailyPattern station={dailyPatternStation()} />, "meteo-daily-pattern", (el) => {
       el.station = dailyPatternStation();
     });
+    expect(base.elementDom).toBe(base.reactDom);
+    expect(base.reactDom).toContain("meteo-wind-vane-label");
+    expect(base.reactDom).toContain("meteo-wind-vane-value");
     expectParity(
       <DailyPattern
         slotMinutes={60}
@@ -569,6 +654,29 @@ describe("parity: charts (fallback width, initial render)", () => {
     );
     expect(reactDom).toBe(elementDom);
     expect(reactDom).toContain(defaultStrings.noHistory);
+  });
+
+  it("DailyPattern — the persistent Avg row dashes a genuinely void slot rather than a fabricated zero", () => {
+    /* Two six-hour slots (of four) get one real sample each, on different
+     * calendar days but the same time of day; the other two never got a
+     * sample at all — a true void, not "the wind happened to be calm". */
+    const twoSlotPoints: HistoryPoint[] = [
+      { averageMps: 4, directionDeg: 90, gustMps: null, lullMps: null, observedAt: iso(Date.parse("2026-08-01T00:30:00Z")), temperatureC: null },
+      { averageMps: 6, directionDeg: 90, gustMps: null, lullMps: null, observedAt: iso(Date.parse("2026-08-02T00:30:00Z")), temperatureC: null },
+    ];
+    const { reactDom, elementDom } = renderBoth(
+      <DailyPattern points={twoSlotPoints} slotMinutes={360} />,
+      "meteo-daily-pattern",
+      (el) => {
+        el.points = twoSlotPoints;
+        el.setAttribute("slot-minutes", "360");
+      },
+    );
+    expect(elementDom).toBe(reactDom);
+    const voidDashes = reactDom.match(/class="meteo-wind-vane-value"[^>]*>"—"</g) ?? [];
+    const realValues = reactDom.match(/class="meteo-wind-vane-value"[^>]*>"\d/g) ?? [];
+    expect(voidDashes).toHaveLength(3);
+    expect(realValues).toHaveLength(1);
   });
 });
 

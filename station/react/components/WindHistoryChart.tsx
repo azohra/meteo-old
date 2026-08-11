@@ -38,6 +38,8 @@ import {
   bandPoints,
   chartFrame,
   chartScales,
+  compareTracePoints,
+  compareWindow,
   compassDirection,
   speedFromMps,
   speedToMps,
@@ -51,6 +53,7 @@ import {
   thinVanes,
   vanePath,
   vaneTicks,
+  windowPoints,
 } from "../../index.js";
 import type { History, HistoryPoint, SpeedUnit, Station } from "../../index.js";
 import { EM_DASH } from "../../index.js";
@@ -70,6 +73,8 @@ export function WindHistoryChart({
   thresholds: thresholdsProp,
   unit: unitProp,
   plotHeight,
+  windowHours,
+  compareOffsetDays,
   strings: stringsProp,
   formatTime: formatTimeProp,
 }: {
@@ -88,6 +93,16 @@ export function WindHistoryChart({
   /* Plot-area height in px; defaults to the core frame, raised to 160 on
    * wide layouts. */
   plotHeight?: number;
+  /* Slices the station's OWN already-fetched history to its trailing N
+   * hours before anything else touches it — no new fetch. Omitted draws
+   * every point the station carries, today's behaviour. */
+  windowHours?: number;
+  /* Overlays a prior period's trace, shifted forward onto today's own x-axis
+   * for direct comparison — client-side re-slice of the SAME history, never
+   * a new fetch. Absent (the default) draws no overlay; also absent from the
+   * overlay itself, silently, when the station's history does not reach
+   * back far enough to cover the requested offset. */
+  compareOffsetDays?: 1 | 2 | 3;
   strings?: StationStringOverrides;
   formatTime?: FormatTime;
 }) {
@@ -140,6 +155,7 @@ export function WindHistoryChart({
     <div className="meteo-wind-chart" ref={wrapRef}>
       {width != null && (
         <MeasuredChart
+          compareOffsetDays={compareOffsetDays}
           formatTime={formatTime}
           history={history}
           plotHeight={plotHeight}
@@ -147,6 +163,7 @@ export function WindHistoryChart({
           thresholds={thresholds}
           unit={unit}
           width={width}
+          windowHours={windowHours}
           words={words}
         />
       )}
@@ -155,6 +172,7 @@ export function WindHistoryChart({
 }
 
 function MeasuredChart({
+  compareOffsetDays,
   formatTime,
   history,
   plotHeight,
@@ -162,8 +180,10 @@ function MeasuredChart({
   thresholds,
   unit,
   width,
+  windowHours,
   words,
 }: {
+  compareOffsetDays: 1 | 2 | 3 | undefined;
   formatTime: FormatTime;
   history: History;
   plotHeight: number | undefined;
@@ -171,9 +191,12 @@ function MeasuredChart({
   thresholds: SpeedThresholds | undefined;
   unit: SpeedUnit;
   width: number;
+  windowHours: number | undefined;
   words: StationStrings;
 }) {
-  const points = history.points;
+  /* windowHours narrows to the trailing N hours of the SAME points array;
+   * omitted, every point the station carries draws, unchanged. */
+  const points = windowPoints(history.points, windowHours);
   const shown = (averageMps: number) => Math.round(speedFromMps(averageMps, unit));
   /* useId can carry characters url(#…) references choke on. */
   const hatchId = `meteo-hatch-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
@@ -201,8 +224,18 @@ function MeasuredChart({
   const band = bandPoints(points, scales);
   const vanes = thinVanes(points);
   const ticks = vaneTicks(vanes, scales);
-  const gaps = historyGaps(history);
+  /* Gaps are the DISPLAYED window's own — a dropout outside windowHours has
+   * nothing to hatch here. */
+  const gaps = historyGaps({ ...history, points: points as HistoryPoint[] });
   const calm = isCalmHistory(points);
+
+  /* Client-side re-slice of the SAME history array — never a new fetch.
+   * Null (no overlay drawn) when the station's own history does not reach
+   * back far enough to cover the requested offset. */
+  const comparePoints =
+    compareOffsetDays == null ? null : compareWindow(history.points, compareOffsetDays, windowHours);
+  const compareTrace =
+    comparePoints == null ? null : compareTracePoints(comparePoints, scales, compareOffsetDays as number);
 
   const foundPin = pinnedAt == null ? -1 : points.findIndex((point) => point.observedAt === pinnedAt);
   const pinnedIndex = foundPin === -1 ? null : foundPin;
@@ -326,6 +359,17 @@ function MeasuredChart({
           >
             <line className="meteo-wind-gap-hatch" x1="0" x2="0" y1="0" y2="6" />
           </pattern>
+          {/* The compare trace rides TODAY's scale; a windier prior day
+           * exits the plot's top edge here rather than drawing over the
+           * threshold labels above it. */}
+          <clipPath id={`${hatchId}-plot`}>
+            <rect
+              height={frame.plotBottom - frame.plotTop}
+              width={frame.right - frame.left}
+              x={frame.left}
+              y={frame.plotTop}
+            />
+          </clipPath>
         </defs>
         {zoneCuts != null &&
           boundsMps != null &&
@@ -398,6 +442,16 @@ function MeasuredChart({
           />
         ))}
         {band != null && <polygon className="meteo-wind-band" points={band} />}
+        {/* Shifted forward by compareOffsetDays onto TODAY's own x-axis, so
+         * the two traces overlay for a direct read — drawn behind the main
+         * trace, which stays the stronger line. */}
+        {compareTrace != null && (
+          <polyline
+            className="meteo-wind-compare"
+            clipPath={`url(#${hatchId}-plot)`}
+            points={compareTrace}
+          />
+        )}
         {meanSegments == null ? (
           <polyline className="meteo-wind-mean" points={averagePoints(points, scales)} />
         ) : (
@@ -447,6 +501,36 @@ function MeasuredChart({
             />
           ),
         )}
+        {/* The persistent compass-letter row: the direction every vane
+         * points, spelled out, so a reader never has to hover to name it. */}
+        {vanes.map((vane) => (
+          <text
+            className="meteo-wind-vane-label"
+            key={`label-${vane.midMs}`}
+            textAnchor="middle"
+            x={scales.xAtMs(vane.midMs)}
+            y={frame.vaneLabelRow + 4}
+          >
+            {vane.directionDeg == null ? EM_DASH : compassDirection(vane.directionDeg)}
+          </text>
+        ))}
+        <text className="meteo-wind-row-label" textAnchor="end" x={frame.left - 8} y={frame.valueRow + 4}>
+          {words.avgLabel}
+        </text>
+        {/* The persistent Avg row: one number per vane, the same scalar mean
+         * the mean trace already plots — never every raw point, too dense
+         * to read. */}
+        {vanes.map((vane) => (
+          <text
+            className="meteo-wind-vane-value"
+            key={`value-${vane.midMs}`}
+            textAnchor="middle"
+            x={scales.xAtMs(vane.midMs)}
+            y={frame.valueRow + 4}
+          >
+            {shown(vane.averageMps)}
+          </text>
+        ))}
         {ticks.map(({ index, timeMs, x }) => (
           <text
             className="meteo-tick"

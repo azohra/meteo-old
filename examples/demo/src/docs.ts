@@ -10,6 +10,7 @@ import clientDataRaw from "../../../docs/client-data.md?raw";
 import reactRaw from "../../../docs/react.md?raw";
 import elementsRaw from "../../../docs/elements.md?raw";
 import themingRaw from "../../../docs/theming.md?raw";
+import changelogRaw from "../../../CHANGELOG.md?raw";
 
 export type DocKey =
   | "readme"
@@ -19,7 +20,8 @@ export type DocKey =
   | "client-data"
   | "react"
   | "elements"
-  | "theming";
+  | "theming"
+  | "changelog";
 
 export type DocEntry = {
   key: DocKey;
@@ -54,6 +56,16 @@ export const DOCS: DocEntry[] = [
   { key: "react", title: "React binding", repoPath: "docs/react.md", markdown: reactRaw },
   { key: "elements", title: "Elements binding", repoPath: "docs/elements.md", markdown: elementsRaw },
   { key: "theming", title: "Theming", repoPath: "docs/theming.md", markdown: themingRaw },
+  { key: "changelog", title: "Changelog", repoPath: "CHANGELOG.md", markdown: changelogRaw },
+];
+
+/* The sidebar's argument: the wire (headless) and the pixels (bindings) are
+ * peer tracks, not a core and an afterthought. */
+export const DOC_GROUPS: Array<{ label: string; keys: DocKey[] }> = [
+  { label: "Start", keys: ["readme", "getting-started"] },
+  { label: "The wire — headless", keys: ["wire-contract", "adapters", "client-data"] },
+  { label: "The pixels — bindings", keys: ["react", "elements", "theming"] },
+  { label: "Project", keys: ["changelog"] },
 ];
 
 export const DOC_BY_KEY = new Map(DOCS.map((doc) => [doc.key, doc]));

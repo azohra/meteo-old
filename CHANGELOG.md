@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.7.0 — 2026-08-11
+
+The dashboard-parity wave, and a site that gives the wire and the pixels
+equal billing.
+
+- **Persistent compass and Avg rows** on `WindHistoryChart` and
+  `DailyPattern` (both bindings, byte-identical): every vane wears its
+  compass point and its window's scalar mean permanently — no hover needed
+  to name a direction or read a number. DailyPattern dashes a genuinely
+  void slot rather than printing a fabricated zero.
+- **`windowHours` and `compareOffsetDays`** on `WindHistoryChart`: slice the
+  station's already-fetched history to a 6/12/24-hour display window, and
+  overlay a prior day's trace shifted onto today's own x-axis — both pure
+  client-side re-slices of the same points, never a new fetch. The overlay
+  is honest about depth: history that doesn't reach back far enough draws
+  nothing, and a windier prior day exits the plot's clipped top edge rather
+  than drawing over the axis labels. New shared geometry:
+  `windowPoints`, `compareWindow`, `compareTracePoints`; `thinVanes` now
+  reports each vane's scalar mean and window bounds.
+- **A Month filter** joins All/Season in the demo's seasonal section —
+  `filterByMonth` already took an arbitrary month array; the demo now
+  exercises a single-month pick.
+- **The site earns the link**: a hero that renders the actual pipeline — a
+  live `reading` document flowing into the dial drawn from it, both ticking
+  under "Simulate live" — a "Two ways in" section showing the same points as
+  `windRose()`'s returned object and as the rendered rose, vendor cards, a
+  brand-only header with the demo's own controls moved to a sticky section
+  toolbar, and Instrument Sans display type over the library's own tokens.
+- **Docs worth reading in place**: grouped sidebar (the wire and the pixels
+  as peer tracks), GitHub-slug heading anchors, an "On this page" rail,
+  prev/next, copy buttons, and token-themed syntax highlighting — the
+  changelog included. The docs bundle is code-split so the landing never
+  pays for it.
+
 ## 0.6.1 — 2026-08-10
 
 The Pages site becomes the one link that carries everything: brand, demo,

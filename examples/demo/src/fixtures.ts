@@ -141,6 +141,75 @@ function summitLogger(nowMs: number): Station {
   };
 }
 
+/* --- The windowHours / compareOffsetDays showcase: a standalone Station,
+ * never part of buildDemoFeed's fleet, so extending its history to several
+ * days never changes what any OTHER section (cards, roses, strips,
+ * sparklines) renders for a real fleet station. WindHistoryChart takes an
+ * explicit `station` prop precisely for cases like this one. A gentle
+ * diurnal cycle plus a small day-to-day drift, so a -1/-2/-3 day compare
+ * overlay actually reads as "yesterday was a bit calmer", not a flat
+ * repeat. --- */
+
+const COMPARE_SHOWCASE_DAYS = 4;
+const COMPARE_SHOWCASE_POINTS_PER_DAY = (24 * 60) / 5;
+
+function compareShowcaseHistory(nowMs: number): HistoryPoint[] {
+  const period = 5 * MINUTE_MS;
+  const anchor = Math.floor(nowMs / period) * period;
+  const totalPoints = COMPARE_SHOWCASE_DAYS * COMPARE_SHOWCASE_POINTS_PER_DAY;
+  const points: HistoryPoint[] = [];
+  for (let offset = totalPoints; offset >= 1; offset -= 1) {
+    const index = totalPoints - offset;
+    const dayIndex = Math.floor(index / COMPARE_SHOWCASE_POINTS_PER_DAY);
+    const minuteOfDay = index % COMPARE_SHOWCASE_POINTS_PER_DAY;
+    /* -1 near dawn, +1 near mid-afternoon — a thermic building day, not a
+     * sawtooth. */
+    const diurnal = Math.sin((minuteOfDay / COMPARE_SHOWCASE_POINTS_PER_DAY) * Math.PI * 2 - Math.PI / 2);
+    const average = Math.max(0, round1(16 + diurnal * 7 + dayIndex * 1.4 + wobble(index * 2) * 3));
+    points.push({
+      observedAt: iso(anchor - offset * period),
+      averageMps: mps(average),
+      gustMps: mps(average + 7 + Math.abs(wobble(index * 11)) * 3),
+      lullMps: mps(Math.max(0, average - 5)),
+      directionDeg: round1(normalizeDegrees(280 + diurnal * 35 + dayIndex * 5 + wobble(index * 9) * 8)),
+      temperatureC: round1(11 - diurnal * -3 + wobble(index * 13) * 0.6),
+    });
+  }
+  return points;
+}
+
+/* A plain, self-contained Station — never fetched, never polled — for the
+ * "Charts" section's windowHours/compareOffsetDays demo alone. */
+export function buildCompareShowcaseStation(nowMs: number): Station {
+  const points = compareShowcaseHistory(nowMs);
+  const last = points[points.length - 1] as HistoryPoint;
+  return {
+    id: "history-lab",
+    name: "History Lab",
+    sourceLabel: "Generated fixture",
+    pageUrl: null,
+    latitude: 49.09,
+    longitude: -117.82,
+    timeZone: "America/Vancouver",
+    elevationM: 1450,
+    capabilities: { gustLull: true, temperature: true, conditions: false, history: true },
+    samplingWindowSeconds: 3,
+    recommendedPollSeconds: 60,
+    status: "ok",
+    reading: {
+      observedAt: last.observedAt,
+      averageMps: last.averageMps,
+      directionDeg: last.directionDeg,
+      gustMps: last.gustMps as number,
+      lullMps: last.lullMps as number,
+      temperatureC: last.temperatureC,
+      windChillC: null,
+      conditions: null,
+    },
+    history: { periodMinutes: 5, points },
+  };
+}
+
 /* --- Station C: "Valley Tempest" — the whole atmosphere, no history. --- */
 
 function valleyTempest(nowMs: number): Station {

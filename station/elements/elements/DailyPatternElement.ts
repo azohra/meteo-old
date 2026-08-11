@@ -18,6 +18,7 @@ import {
   averagePoints,
   chartFrame,
   chartScales,
+  compassDirection,
   dailyPattern,
   isCalm,
   resolveStation,
@@ -360,6 +361,43 @@ export class DailyPatternElement extends MeteoStationElement {
               d: vanePath(scales.xAtMs(vane.midMs), frame.vaneRow, vane.directionDeg),
             }),
       ),
+      /* The persistent compass-letter row: the direction every vane points,
+       * spelled out, so a reader never has to hover to name it. */
+      vanes.map((vane) =>
+        hs(
+          "text",
+          {
+            class: "meteo-wind-vane-label",
+            "text-anchor": "middle",
+            x: scales.xAtMs(vane.midMs),
+            y: frame.vaneLabelRow + 4,
+          },
+          vane.directionDeg == null ? EM_DASH : compassDirection(vane.directionDeg),
+        ),
+      ),
+      hs(
+        "text",
+        { class: "meteo-wind-row-label", "text-anchor": "end", x: frame.left - 8, y: frame.valueRow + 4 },
+        words.avgLabel,
+      ),
+      /* The persistent Avg row: one number per vane — dashed when every slot
+       * the vane's window covers is void (nothing this station ever
+       * recorded at that time of day), never a fabricated zero. */
+      vanes.map((vane) => {
+        const voidWindow = slots
+          .slice(vane.startIndex, vane.endIndex)
+          .every((slot) => slot.sampleCount === 0);
+        return hs(
+          "text",
+          {
+            class: "meteo-wind-vane-value",
+            "text-anchor": "middle",
+            x: scales.xAtMs(vane.midMs),
+            y: frame.valueRow + 4,
+          },
+          voidWindow ? EM_DASH : String(shown(vane.averageMps)),
+        );
+      }),
       ticks.map(({ index, timeMs, x }) =>
         hs(
           "text",

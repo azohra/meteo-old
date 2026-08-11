@@ -16,7 +16,13 @@ export type ChartFrame = {
   plotBottom: number;
   plotTop: number;
   right: number;
+  /* The compass-letter row, just above the vane arrows — inside the same
+   * plotBottom..labelRow budget, so adding it never grows the chart. */
+  vaneLabelRow: number;
   vaneRow: number;
+  /* The persistent per-vane number row (WindHistoryChart's Avg, DailyPattern's
+   * Avg), between the vane arrows and the time ticks. */
+  valueRow: number;
   width: number;
 };
 
@@ -37,7 +43,9 @@ export function chartFrame(width: number): ChartFrame {
     plotBottom,
     plotTop,
     right: Math.max(CHART_AXIS_GUTTER + 40, width - 6),
+    vaneLabelRow: plotBottom + 12,
     vaneRow: plotBottom + 26,
+    valueRow: plotBottom + 40,
     width,
   };
 }
@@ -205,7 +213,20 @@ export function vectorMeanWind(points: ReadonlyArray<HistoryPoint>): WindVector 
   };
 }
 
-export type Vane = { directionDeg: number | null; midMs: number };
+export type Vane = {
+  /* Scalar mean of the window's averageMps — the number the persistent Avg
+   * row prints under this vane, pairing the vector-mean direction with the
+   * plain speed average WindHistoryChart's own mean trace already plots. */
+  averageMps: number;
+  directionDeg: number | null;
+  /* [startIndex, endIndex) into the SAME points array this vane was thinned
+   * from — exposed so a caller holding a second array in lockstep (a
+   * DailyPattern slot's sampleCount, say) can slice its own array with the
+   * exact window thinVanes used, instead of re-deriving the step math. */
+  endIndex: number;
+  midMs: number;
+  startIndex: number;
+};
 
 /* Thinned so vanes cannot touch. Each is the vector mean of its window, not
  * one sample plucked from it, so a vane never claims a direction the wind
@@ -217,10 +238,18 @@ export function thinVanes(
   if (points.length === 0) return [];
   const step = Math.max(1, Math.round(points.length / target));
   return Array.from({ length: Math.ceil(points.length / step) }, (_, index) => {
-    const window = points.slice(index * step, index * step + step);
+    const startIndex = index * step;
+    const endIndex = startIndex + step;
+    const window = points.slice(startIndex, endIndex);
     const first = Date.parse((window[0] as HistoryPoint).observedAt);
     const last = Date.parse((window[window.length - 1] as HistoryPoint).observedAt);
-    return { directionDeg: meanDirectionDeg(window), midMs: first + (last - first) / 2 };
+    return {
+      averageMps: window.reduce((sum, point) => sum + point.averageMps, 0) / window.length,
+      directionDeg: meanDirectionDeg(window),
+      endIndex,
+      midMs: first + (last - first) / 2,
+      startIndex,
+    };
   });
 }
 
@@ -503,7 +532,9 @@ export function stretchFrame(frame: ChartFrame, plotHeight: number): ChartFrame 
     height: frame.height + delta,
     labelRow: frame.labelRow + delta,
     plotBottom: frame.plotBottom + delta,
+    vaneLabelRow: frame.vaneLabelRow + delta,
     vaneRow: frame.vaneRow + delta,
+    valueRow: frame.valueRow + delta,
   };
 }
 
@@ -554,4 +585,78 @@ export function trendRuns(
   }
   if (run != null) runs.push(run);
   return runs;
+}
+
+/* ---------- the display window and the day-over-day overlay ---------- */
+
+const HOUR_MS = 3_600_000;
+const DAY_MS = 86_400_000;
+
+/* The trailing `hours` of the SAME points array the caller already has — no
+ * new fetch, just a narrower read of history already in hand. `hours`
+ * omitted is a no-op: every binding's unchanged default, the whole array. */
+export function windowPoints(
+  points: ReadonlyArray<HistoryPoint>,
+  hours: number | undefined,
+): ReadonlyArray<HistoryPoint> {
+  if (hours == null || points.length === 0) return points;
+  const lastMs = Date.parse((points[points.length - 1] as HistoryPoint).observedAt);
+  const cutoffMs = lastMs - hours * HOUR_MS;
+  return points.filter((point) => Date.parse(point.observedAt) >= cutoffMs);
+}
+
+/* A prior period's trace, client-side re-sliced from the SAME `points` array
+ * the chart already has — never a new fetch, the same trick `dailyPattern`
+ * and `filterByMonth` already play on a longer array than what a live chart
+ * visually displays. `windowHours` names the currently displayed span (the
+ * same value passed to windowPoints for the main trace; omitted means the
+ * whole array is the display window); `offsetDays` shifts that span back by
+ * whole days.
+ *
+ * Null — never a fabricated short trace — when `points` does not reach back
+ * far enough to cover the requested span: the matched window's own edges
+ * must land within one typical sample period (scaled by the same
+ * HISTORY_GAP_TOLERANCE_FACTOR an outage is judged by) of the span the
+ * caller asked for. */
+export function compareWindow(
+  points: ReadonlyArray<HistoryPoint>,
+  offsetDays: number,
+  windowHours?: number,
+): HistoryPoint[] | null {
+  const displayed = windowPoints(points, windowHours);
+  if (displayed.length === 0) return null;
+  const shiftMs = offsetDays * DAY_MS;
+  const startMs = Date.parse((displayed[0] as HistoryPoint).observedAt) - shiftMs;
+  const endMs = Date.parse((displayed[displayed.length - 1] as HistoryPoint).observedAt) - shiftMs;
+  const window = points.filter((point) => {
+    const ms = Date.parse(point.observedAt);
+    return ms >= startMs && ms <= endMs;
+  });
+  if (window.length === 0) return null;
+  const firstMs = Date.parse((points[0] as HistoryPoint).observedAt);
+  const lastMs = Date.parse((points[points.length - 1] as HistoryPoint).observedAt);
+  const averagePeriodMs = points.length > 1 ? (lastMs - firstMs) / (points.length - 1) : 0;
+  const tolerance = averagePeriodMs * HISTORY_GAP_TOLERANCE_FACTOR;
+  const matchedStartMs = Date.parse((window[0] as HistoryPoint).observedAt);
+  const matchedEndMs = Date.parse((window[window.length - 1] as HistoryPoint).observedAt);
+  if (matchedStartMs - startMs > tolerance || endMs - matchedEndMs > tolerance) return null;
+  return window;
+}
+
+/* The compare trace's own coordinates: reuses the CURRENT chart's own
+ * scale, shifting each compare point's real timestamp forward by
+ * offsetDays so a prior period overlays the same x-position as today's
+ * timeline — "was it windier this time yesterday" read directly off two
+ * aligned lines, never off two separate axes. */
+export function compareTracePoints(
+  comparePoints: ReadonlyArray<HistoryPoint>,
+  scales: ChartScales,
+  offsetDays: number,
+): string {
+  const shiftMs = offsetDays * DAY_MS;
+  return comparePoints
+    .map((point) =>
+      coordinate(scales.xAtMs(Date.parse(point.observedAt) + shiftMs), scales.yAt(point.averageMps)),
+    )
+    .join(" ");
 }

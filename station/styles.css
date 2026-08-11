@@ -47,6 +47,9 @@
     0 8px 24px light-dark(rgb(23 35 46 / 0.05), rgb(0 0 0 / 0.3));
   --meteo-wind-band-fill: light-dark(rgba(15, 116, 144, 0.22), rgba(69, 195, 224, 0.22));
   --meteo-wind-mean: light-dark(#0f7490, #45c3e0);
+  /* The day-over-day overlay: a muted, desaturated echo of the mean trace's
+   * own accent, so "today" always reads as the stronger line. */
+  --meteo-wind-compare: light-dark(#8a97a3, #6b7885);
   --meteo-wind-vane: light-dark(#3b4a58, #b8c6d3);
   --meteo-cursor: light-dark(#d97706, #f5a623);
   /* The rose's judgment ring: green for a favorable direction sector, a
@@ -501,6 +504,17 @@
 .meteo-wind-mean-segment.meteo-band-3 { stroke: var(--meteo-band-3, #e2662c); }
 .meteo-wind-mean-segment.meteo-band-4 { stroke: var(--meteo-band-4, #c22727); }
 
+/* The day-over-day overlay: dashed and behind the main trace on purpose —
+ * "today" reads as the stronger, unbroken line. */
+.meteo-wind-compare {
+  fill: none;
+  stroke: var(--meteo-wind-compare, #8a97a3);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 4 3;
+}
+
 .meteo-wind-calm-note {
   font-size: 12px;
   font-style: italic;
@@ -517,6 +531,21 @@
   stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* The persistent compass letter above every vane, and the persistent Avg
+ * number below it — both small, tabular, and quieter than the vane row's
+ * own "TO" caption; text.meteo-wind-chart-svg's base rule already sets
+ * font-family/fill, so these only carry the size and number-friendly tabular
+ * figures the value row wants. */
+.meteo-wind-vane-label {
+  font-size: 9px;
+}
+
+.meteo-wind-vane-value {
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 .meteo-cursor {

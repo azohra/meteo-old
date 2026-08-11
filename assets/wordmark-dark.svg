@@ -46,6 +46,8 @@ text{font-family:ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sa
 .meteo-wind-mean-segment.meteo-band-3{stroke:#f4732c}
 .meteo-wind-mean-segment.meteo-band-4{stroke:#ef4444}
 .meteo-wind-row-label{font-size:9px;letter-spacing:0.08em}
+.meteo-wind-vane-label{font-size:9px}
+.meteo-wind-vane-value{font-size:9px}
 .meteo-wind-vane{fill:none;stroke:undefined;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .meteo-wind-gap-hatch{stroke:rgba(149, 164, 179, 0.45);stroke-width:1.25}
 .meteo-wind-rose-grid{fill:none;stroke:#28333e;stroke-width:1}

@@ -30,6 +30,8 @@ import {
   bandPoints,
   chartFrame,
   chartScales,
+  compareTracePoints,
+  compareWindow,
   compassDirection,
   historyGaps,
   isCalm,
@@ -43,6 +45,7 @@ import {
   thresholdsToMps,
   vanePath,
   vaneTicks,
+  windowPoints,
 } from "../../index.js";
 import type {
   ChartFrame,
@@ -73,7 +76,14 @@ type ChartContext = {
 };
 
 export class WindHistoryChartElement extends MeteoStationElement {
-  static readonly observedAttributes = ["plot-height", "station-id", "thresholds", "unit"];
+  static readonly observedAttributes = [
+    "compare-offset-days",
+    "plot-height",
+    "station-id",
+    "thresholds",
+    "unit",
+    "window-hours",
+  ];
 
   #width: number | null = null;
   #observer: ResizeObserver | null = null;
@@ -149,7 +159,11 @@ export class WindHistoryChartElement extends MeteoStationElement {
     formatTime: FormatTime,
     width: number,
   ): void {
-    const points = history.points;
+    const windowHours = numberAttribute(this.getAttribute("window-hours"));
+    const compareOffsetDays = numberAttribute(this.getAttribute("compare-offset-days"));
+    /* windowHours narrows to the trailing N hours of the SAME points array;
+     * omitted, every point the station carries draws, unchanged. */
+    const points = windowPoints(history.points, windowHours);
     const shown = (averageMps: number) => roundSpeed(averageMps, unit);
     const hatchId = `meteo-hatch-e${++hatchCounter}`;
     const stationName = this.requiredStation("meteo-wind-history-chart").name;
@@ -172,8 +186,18 @@ export class WindHistoryChartElement extends MeteoStationElement {
     const band = bandPoints(points, scales);
     const vanes = thinVanes(points);
     const ticks = vaneTicks(vanes, scales);
-    const gaps = historyGaps(history);
+    /* Gaps are the DISPLAYED window's own — a dropout outside windowHours
+     * has nothing to hatch here. */
+    const gaps = historyGaps({ ...history, points: points as HistoryPoint[] });
     const calm = isCalmHistory(points);
+
+    /* Client-side re-slice of the SAME history array — never a new fetch.
+     * Null (no overlay drawn) when the station's own history does not reach
+     * back far enough to cover the requested offset. */
+    const comparePoints =
+      compareOffsetDays == null ? null : compareWindow(history.points, compareOffsetDays, windowHours);
+    const compareTrace =
+      comparePoints == null ? null : compareTracePoints(comparePoints, scales, compareOffsetDays as number);
 
     this.#context = { formatTime, frame, points, scales, unit, words };
 
@@ -255,6 +279,19 @@ export class WindHistoryChartElement extends MeteoStationElement {
           },
           hs("line", { class: "meteo-wind-gap-hatch", x1: "0", x2: "0", y1: "0", y2: "6" }),
         ),
+        /* The compare trace rides TODAY's scale; a windier prior day exits
+         * the plot's top edge here rather than drawing over the threshold
+         * labels above it. */
+        hs(
+          "clipPath",
+          { id: `${hatchId}-plot` },
+          hs("rect", {
+            height: frame.plotBottom - frame.plotTop,
+            width: frame.right - frame.left,
+            x: frame.left,
+            y: frame.plotTop,
+          }),
+        ),
       ),
       zoneCuts != null && boundsMps != null
         ? zoneCuts.slice(0, -1).map((lower, index) => {
@@ -329,6 +366,15 @@ export class WindHistoryChartElement extends MeteoStationElement {
         }),
       ),
       band != null && hs("polygon", { class: "meteo-wind-band", points: band }),
+      /* Shifted forward by compareOffsetDays onto TODAY's own x-axis, so the
+       * two traces overlay for a direct read — drawn behind the main trace,
+       * which stays the stronger line. */
+      compareTrace != null &&
+        hs("polyline", {
+          class: "meteo-wind-compare",
+          "clip-path": `url(#${hatchId}-plot)`,
+          points: compareTrace,
+        }),
       meanSegments == null
         ? hs("polyline", { class: "meteo-wind-mean", points: averagePoints(points, scales) })
         : meanSegments.map((segment) =>
@@ -370,6 +416,40 @@ export class WindHistoryChartElement extends MeteoStationElement {
               class: "meteo-wind-vane",
               d: vanePath(scales.xAtMs(vane.midMs), frame.vaneRow, vane.directionDeg),
             }),
+      ),
+      /* The persistent compass-letter row: the direction every vane points,
+       * spelled out, so a reader never has to hover to name it. */
+      vanes.map((vane) =>
+        hs(
+          "text",
+          {
+            class: "meteo-wind-vane-label",
+            "text-anchor": "middle",
+            x: scales.xAtMs(vane.midMs),
+            y: frame.vaneLabelRow + 4,
+          },
+          vane.directionDeg == null ? EM_DASH : compassDirection(vane.directionDeg),
+        ),
+      ),
+      hs(
+        "text",
+        { class: "meteo-wind-row-label", "text-anchor": "end", x: frame.left - 8, y: frame.valueRow + 4 },
+        words.avgLabel,
+      ),
+      /* The persistent Avg row: one number per vane, the same scalar mean
+       * the mean trace already plots — never every raw point, too dense to
+       * read. */
+      vanes.map((vane) =>
+        hs(
+          "text",
+          {
+            class: "meteo-wind-vane-value",
+            "text-anchor": "middle",
+            x: scales.xAtMs(vane.midMs),
+            y: frame.valueRow + 4,
+          },
+          String(shown(vane.averageMps)),
+        ),
       ),
       ticks.map(({ index, timeMs, x }) =>
         hs(

@@ -403,6 +403,41 @@ function MeasuredDailyPattern({
             />
           ),
         )}
+        {/* The persistent compass-letter row: the direction every vane
+         * points, spelled out, so a reader never has to hover to name it. */}
+        {vanes.map((vane) => (
+          <text
+            className="meteo-wind-vane-label"
+            key={`label-${vane.midMs}`}
+            textAnchor="middle"
+            x={scales.xAtMs(vane.midMs)}
+            y={frame.vaneLabelRow + 4}
+          >
+            {vane.directionDeg == null ? EM_DASH : compassDirection(vane.directionDeg)}
+          </text>
+        ))}
+        <text className="meteo-wind-row-label" textAnchor="end" x={frame.left - 8} y={frame.valueRow + 4}>
+          {words.avgLabel}
+        </text>
+        {/* The persistent Avg row: one number per vane — dashed when every
+         * slot the vane's window covers is void (nothing this station ever
+         * recorded at that time of day), never a fabricated zero. */}
+        {vanes.map((vane) => {
+          const voidWindow = slots
+            .slice(vane.startIndex, vane.endIndex)
+            .every((slot) => slot.sampleCount === 0);
+          return (
+            <text
+              className="meteo-wind-vane-value"
+              key={`value-${vane.midMs}`}
+              textAnchor="middle"
+              x={scales.xAtMs(vane.midMs)}
+              y={frame.valueRow + 4}
+            >
+              {voidWindow ? EM_DASH : shown(vane.averageMps)}
+            </text>
+          );
+        })}
         {ticks.map(({ index, timeMs, x }) => (
           <text
             className="meteo-tick"
