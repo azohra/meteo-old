@@ -100,8 +100,8 @@ export function resolveDocLink(href: string, fromRepoPath: string): ResolvedLink
   return {
     kind: "external",
     href: isImage
-      ? `https://raw.githubusercontent.com/azohra/meteo/main/${resolvedPath}`
-      : `https://github.com/azohra/meteo/blob/main/${resolvedPath}${hash ? `#${hash}` : ""}`,
+      ? `https://raw.githubusercontent.com/azohra/meteo-old/main/${resolvedPath}`
+      : `https://github.com/azohra/meteo-old/blob/main/${resolvedPath}${hash ? `#${hash}` : ""}`,
   };
 }
 

@@ -31,7 +31,9 @@ jobs:
       # personal data, only what examples/shared/fakeStation.mjs invents.
       - run: pnpm --dir examples/demo build
         env:
-          VITE_BASE: /meteo/
+          # Derived from the repo name so a rename can't strand the site
+          # on a stale base path (assets 404 under the new URL).
+          VITE_BASE: /${{ github.event.repository.name }}/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
