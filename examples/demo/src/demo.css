@@ -1381,3 +1381,21 @@ body {
   font-size: 0.7rem;
   color: var(--meteo-muted, #62717f);
 }
+
+/* ---- The credit ---- */
+
+.demo-footer-left {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.demo-footer-credit {
+  margin: 0;
+  color: var(--meteo-muted, #62717f);
+  font-size: 0.8rem;
+}
+
+/* The heart wears the accent — the one dab of colour the footer gets. */
+.demo-footer-heart {
+  color: var(--meteo-accent, #0f7490);
+}

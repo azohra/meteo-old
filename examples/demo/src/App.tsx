@@ -975,10 +975,16 @@ export default function App() {
       )}
 
       <footer className="demo-footer">
-        <p>
-          Every pixel above is drawn by the library — the fixtures are the only
-          thing this page fakes.
-        </p>
+        <div className="demo-footer-left">
+          <p>
+            Every pixel above is drawn by the library — the fixtures are the
+            only thing this page fakes.
+          </p>
+          <p className="demo-footer-credit">
+            Made with <span aria-label="love" className="demo-footer-heart">♥</span> by
+            Justin Watts in Nelson, BC
+          </p>
+        </div>
         <a href="https://github.com/azohra/meteo">github.com/azohra/meteo</a>
       </footer>
     </div>

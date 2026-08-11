@@ -274,3 +274,7 @@ pnpm test
 `pnpm schemas` regenerates `schema/` from the built contract; a drift test
 keeps the committed files honest. `pnpm readme:assets` regenerates all README
 imagery through the library's own renderers — nothing is hand-drawn.
+
+---
+
+Made with ♥ by Justin Watts in Nelson, BC.
