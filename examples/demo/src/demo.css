@@ -27,6 +27,8 @@ body {
   --demo-term-border: #22303d;
   --demo-term-ink: #d7e2ec;
   --demo-term-muted: #7c8b99;
+  /* One number the header and everything sticky under it agree on. */
+  --demo-header-h: 60px;
 }
 
 /* ---- Sticky header: wordmark, global controls, section nav ---- */
@@ -46,10 +48,11 @@ body {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0.7rem 1.2rem;
+  gap: 0.5rem 1.2rem;
   max-width: 1080px;
+  min-height: var(--demo-header-h);
   margin: 0 auto;
-  padding: 0.95rem 1.5rem 0.8rem;
+  padding: 0.4rem 1.5rem;
 }
 
 /* The real wordmark, not its name typed in the page's own font — the two
@@ -58,14 +61,16 @@ body {
 .demo-wordmark {
   display: flex;
   align-items: center;
+  flex-shrink: 0; /* the brand never gets squeezed by the link row */
   gap: 0.6rem;
   text-decoration: none;
   white-space: nowrap;
 }
 
+/* The wordmark owns the header's height — it IS the header's left half. */
 .demo-wordmark-img {
   display: block;
-  height: 22px;
+  height: 36px;
   width: auto;
 }
 
@@ -1132,7 +1137,7 @@ body {
 
 .demo-toolbar {
   position: sticky;
-  top: 3.4rem; /* riding just under the header */
+  top: var(--demo-header-h); /* riding just under the header */
   z-index: 9;
   border-bottom: 1px solid var(--meteo-border, #dbe2e9);
   background: light-dark(rgba(238, 241, 245, 0.92), rgba(13, 19, 25, 0.92));
