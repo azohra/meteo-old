@@ -149,10 +149,10 @@ the components wear are in [theming.md](theming.md).
 ## 3 · A season, not a window
 
 `loadWindnerdStation` accepts a resolution alongside the window. This is a
-direct-adapter option, not (yet) one `loadStationFeed`/`loadStationCurrent`
-forward — those two only ever pass `{ historyHours, mode, environment }`
-through to any vendor, windnerd included, so a season pull calls
-`loadWindnerdStation` itself rather than going through the fleet-feed API:
+direct-adapter option: `loadStationFeed` and `loadStationCurrent` forward
+only `{ historyHours, mode, environment }` to any vendor, windnerd included,
+so a season pull calls `loadWindnerdStation` itself rather than going
+through the fleet-feed API:
 
 ```ts
 type WindnerdRecordPeriodMinutes = 1 | 15 | 60 | 180; // the vendor's own whitelist; anything else 404s
@@ -181,9 +181,9 @@ offset (you configured it, or you own the hardware and already know it) to
 bucket in local time instead. The vendor's response carries that same
 offset too, as `time_offset` — one entry per record, not a single field, so
 `parseWindnerdRecords` takes the first — but only at period 180.
-`loadWindnerdStation` doesn't (yet) surface it on the `Station` it returns
-(that would be a wire-contract addition this pass didn't make); for now,
-only a caller running `parseWindnerdRecords` directly against the raw
+`loadWindnerdStation` does not surface it on the `Station` it returns —
+surfacing it there is a wire-contract addition, not one this pass makes.
+Only a caller running `parseWindnerdRecords` directly against the raw
 upstream text sees it, in the result's `utcOffsetMinutes`.
 
 Two pure functions narrow which points a component then sees, and one turns

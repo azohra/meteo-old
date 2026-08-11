@@ -54,6 +54,10 @@ render the same DOM from the same shared core — React components, or
 framework-free custom elements for any page at all — and neither is "the
 reference": a parity suite holds them byte-identical.
 
+The rendering layer is optional. The wire contract, vendor adapters,
+derivations, chart geometry, and polling stores are framework-free modules —
+the components are one consumer of that core, not the price of admission.
+
 A vendor's own dashboard is the bar: not just a live six-hour card, but a
 season's wind rose and a typical day, built from months of history the same
 adapter already pulls. `filterByMonth` and `filterByTimeOfDay` narrow which
@@ -199,13 +203,16 @@ import { DailyPattern, WindRose } from "@azohra/meteo/station/react";
 and reports the *vector* mean of each bucket — the resultant of averaging
 speed and direction together, so a bucket that blew from every direction
 reads calmer than one that blew from just one, exactly as a real "typical
-day" should. Both filters and `dailyPattern` bucket in plain UTC by default
-(`utcOffsetMinutes: 0`) — pass your station's own standard-time offset for
-local time instead; [docs/getting-started.md](docs/getting-started.md) has
-the full story (WindNerd's 180-minute aggregate is itself local-aligned, and
-carries that offset once, as `time_offset`).
+day" should. Both filters and `dailyPattern` default to UTC; pass your
+station's own standard-time offset to bucket in local time instead —
+[docs/getting-started.md](docs/getting-started.md#3--a-season-not-a-window)
+has the full story.
 
 ## Documentation
+
+Every page below is also rendered on
+[the live site](https://azohra.github.io/meteo/?view=docs&page=readme) —
+one link carries the demo and the docs.
 
 | Page | The single authority for |
 |---|---|

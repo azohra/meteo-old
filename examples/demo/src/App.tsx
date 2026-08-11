@@ -15,6 +15,7 @@
  * explicit props and no provider in sight — the provider is a default,
  * never a requirement. */
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import {
   METEOROLOGICAL_SEASON_MONTHS,
   filterByMonth,
@@ -43,8 +44,26 @@ import {
 } from "@azohra/meteo/station/react";
 import "@azohra/meteo/station/styles.css";
 import "./demo.css";
+import { DocsView } from "./DocsView";
+import { isDocKey, type DocKey } from "./docs";
 import { buildDemoFeed } from "./fixtures";
 import { buildLongHistory } from "../../shared/fakeStation.mjs";
+import wordmarkDark from "../../../assets/wordmark-dark.svg";
+import wordmarkLight from "../../../assets/wordmark-light.svg";
+
+type View = "gallery" | "docs";
+
+/* The whole nav state lives in the URL (?view=docs&page=react) — a page
+ * someone reads and shares stays exactly that page on reload, and the
+ * browser's own back/forward buttons work without a router dependency. */
+function readViewFromLocation(): { view: View; page: DocKey } {
+  const params = new URLSearchParams(window.location.search);
+  const page = params.get("page");
+  return {
+    view: params.get("view") === "docs" ? "docs" : "gallery",
+    page: isDocKey(page) ? page : "readme",
+  };
+}
 
 type Season = "all" | "winter" | "spring" | "summer" | "fall";
 const SEASON_CHOICES: { value: Season; label: string }[] = [
@@ -163,6 +182,32 @@ const SECTIONS: { id: string; title: string; nav: string; note: string }[] = [
   },
 ];
 
+/* A real <a href> — middle-click / cmd-click / "open in new tab" all still
+ * work — that navigates in-page on a plain left click, same as the rest of
+ * this SPA's internal nav. */
+function DocLink({
+  children,
+  onOpen,
+  to,
+}: {
+  children: ReactNode;
+  onOpen: (page: DocKey, hash: string) => void;
+  to: DocKey;
+}) {
+  return (
+    <a
+      href={`?view=docs&page=${to}`}
+      onClick={(event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        onOpen(to, "");
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
 function SectionHead({ id }: { id: string }) {
   const section = SECTIONS.find((entry) => entry.id === id);
   if (!section) return null;
@@ -181,6 +226,24 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>("system");
   const [season, setSeason] = useState<Season>("all");
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
+  const [{ view, page: docPage }, setNav] = useState(readViewFromLocation);
+
+  useEffect(() => {
+    const onPopState = () => setNav(readViewFromLocation());
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const openDocs = (page: DocKey, hash: string) => {
+    setNav({ view: "docs", page });
+    const url = `${window.location.pathname}?view=docs&page=${page}`;
+    window.history.pushState({}, "", hash ? `${url}#${hash}` : url);
+    if (hash) requestAnimationFrame(() => document.getElementById(hash)?.scrollIntoView());
+  };
+  const closeDocs = () => {
+    setNav({ view: "gallery", page: docPage });
+    window.history.pushState({}, "", window.location.pathname);
+  };
 
   /* Generated once, at mount — settled history, not something the "simulate
    * live" ticker has any business regenerating every two seconds. */
@@ -211,32 +274,51 @@ export default function App() {
     >
       <header className="demo-header">
         <div className="demo-header-bar">
-          <span className="demo-wordmark">
-            azohra meteo <span className="demo-wordmark-sub">· station demo</span>
-          </span>
+          <a
+            className="demo-wordmark"
+            href={view === "gallery" ? "#cards" : "?"}
+            onClick={(event) => {
+              if (view === "docs") {
+                event.preventDefault();
+                closeDocs();
+              }
+            }}
+          >
+            <img alt="" className="demo-wordmark-img demo-wordmark-light" src={wordmarkLight} />
+            <img alt="" className="demo-wordmark-img demo-wordmark-dark" src={wordmarkDark} />
+            <span className="demo-wordmark-sub">station demo</span>
+          </a>
           <div className="demo-controls">
-            <div aria-label="Display unit" className="demo-segmented" role="group">
-              {UNIT_CHOICES.map((choice) => (
+            {view === "gallery" ? (
+              <>
+                <div aria-label="Display unit" className="demo-segmented" role="group">
+                  {UNIT_CHOICES.map((choice) => (
+                    <button
+                      aria-pressed={unit === choice}
+                      key={choice}
+                      onClick={() => setUnit(choice)}
+                      type="button"
+                    >
+                      {speedUnitLabel(choice)}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  aria-pressed={unit === choice}
-                  key={choice}
-                  onClick={() => setUnit(choice)}
+                  aria-pressed={live}
+                  className="demo-live-toggle"
+                  data-live={live}
+                  onClick={() => setLive((value) => !value)}
                   type="button"
                 >
-                  {speedUnitLabel(choice)}
+                  <span className="demo-live-dot" />
+                  {live ? "Live · 2 s" : "Simulate live"}
                 </button>
-              ))}
-            </div>
-            <button
-              aria-pressed={live}
-              className="demo-live-toggle"
-              data-live={live}
-              onClick={() => setLive((value) => !value)}
-              type="button"
-            >
-              <span className="demo-live-dot" />
-              {live ? "Live · 2 s" : "Simulate live"}
-            </button>
+              </>
+            ) : (
+              <button className="demo-docs-back" onClick={closeDocs} type="button">
+                ← Back to demo
+              </button>
+            )}
             <div aria-label="Theme" className="demo-segmented" role="group">
               {THEME_CHOICES.map((choice) => (
                 <button
@@ -249,16 +331,105 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {view === "gallery" && (
+              <button className="demo-docs-open" onClick={() => openDocs("readme", "")} type="button">
+                Docs
+              </button>
+            )}
           </div>
         </div>
-        <nav aria-label="Sections" className="demo-nav">
-          {SECTIONS.map((section) => (
-            <a href={`#${section.id}`} key={section.id}>
-              {section.nav}
-            </a>
-          ))}
-        </nav>
+        {view === "gallery" && (
+          <nav aria-label="Sections" className="demo-nav">
+            {SECTIONS.map((section) => (
+              <a href={`#${section.id}`} key={section.id}>
+                {section.nav}
+              </a>
+            ))}
+          </nav>
+        )}
       </header>
+
+      {view === "gallery" && (
+      <>
+      <section className="demo-about">
+        <div className="demo-about-inner">
+          <div className="demo-hero">
+            <h1 className="demo-hero-headline">Every station. One wire. Your pixels.</h1>
+            <p className="demo-hero-sub">
+              Vendor adapters normalize whatever hardware you run into one
+              wire contract. Build your own UI on the data, or render it
+              with components that live natively in your design system.
+            </p>
+            <div className="demo-hero-band" />
+            <div className="demo-hero-features">
+              <div>
+                <h3>Any vendor</h3>
+                <p>WindNerd, Tempest, Campbell Scientific, or a loader you write yourself.</p>
+              </div>
+              <div>
+                <h3>Headless core</h3>
+                <p>The contract, derivations, chart geometry, and polling stores are framework-free — components optional.</p>
+              </div>
+              <div>
+                <h3>Rendered natively</h3>
+                <p>Dial, graded history, wind rose, daily pattern — the full station-page vocabulary, no iframe.</p>
+              </div>
+              <div>
+                <h3>Two peer bindings</h3>
+                <p>React or framework-free custom elements. Byte-identical DOM; neither is the reference.</p>
+              </div>
+            </div>
+          </div>
+          <div className="demo-about-grid">
+            <div>
+              <h3>Vendors supported</h3>
+              <ul>
+                <li>
+                  <strong>WindNerd</strong> — 3D-printed anemometer kits;
+                  live and long-range history off their own records endpoint
+                </li>
+                <li>
+                  <strong>WeatherFlow Tempest</strong> — wind, temperature,
+                  pressure, humidity, solar, lightning
+                </li>
+                <li>
+                  <strong>Campbell Scientific</strong> dataloggers —
+                  DataQuery / CRBasic tables
+                </li>
+                <li>
+                  <strong>Custom</strong> — bring your own loader; the same
+                  wire contract, the same components
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3>Docs &amp; source</h3>
+              <ul>
+                <li>
+                  <a href="https://github.com/azohra/meteo">Repository ↗</a>
+                </li>
+                <li>
+                  <DocLink onOpen={openDocs} to="getting-started">Getting started</DocLink>
+                </li>
+                <li>
+                  <DocLink onOpen={openDocs} to="wire-contract">Wire contract</DocLink>
+                </li>
+                <li>
+                  <DocLink onOpen={openDocs} to="adapters">Adapters</DocLink>
+                </li>
+                <li>
+                  <DocLink onOpen={openDocs} to="react">React binding</DocLink>
+                  {" · "}
+                  <DocLink onOpen={openDocs} to="elements">Elements binding</DocLink>
+                </li>
+                <li>
+                  <DocLink onOpen={openDocs} to="theming">Theming</DocLink>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <main className="demo-main">
         <StationFeedProvider
@@ -395,13 +566,13 @@ export default function App() {
           <section className="demo-section" id="primitives">
             <SectionHead id="primitives" />
             <div className="demo-primitives">
-              <div className="demo-panel">
+              <div className="demo-panel demo-panel-compact">
                 <h3>Atoms in a sentence — the feed's primary station</h3>
                 <p className="demo-sentence">
                   <Speed /> <Direction />, gusting <Gust />, <UpdatedAt />
                 </p>
               </div>
-              <div className="demo-panel">
+              <div className="demo-panel demo-panel-compact">
                 <h3>Band chips — five words over 5 · 12 · 20 · 28 km/h</h3>
                 <div className="demo-chip-row">
                   {feed.stations.map((station) => (
@@ -425,7 +596,7 @@ export default function App() {
                   ))}
                 </div>
               </div>
-              <div className="demo-panel">
+              <div className="demo-panel demo-panel-compact">
                 <h3>The bare dial, two sizes — same 160-unit drawing</h3>
                 <div className="demo-dials">
                   <Dial size={120} stationId="launch-ridge" />
@@ -452,6 +623,10 @@ export default function App() {
           </div>
         </section>
       </main>
+      </>
+      )}
+
+      {view === "docs" && <DocsView onNavigate={openDocs} page={docPage} />}
 
       <footer className="demo-footer">
         <p>

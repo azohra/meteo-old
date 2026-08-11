@@ -199,8 +199,13 @@
   box-shadow: var(--meteo-shadow, 0 1px 2px rgb(23 35 46 / 0.06), 0 8px 24px rgb(23 35 46 / 0.05));
 }
 
+/* Wraps rather than overflows: LULL/dial/GUST needs more width than a
+ * narrow card can promise, and a flank spilling into whatever sits beside
+ * the card reads as a broken layout, not a compact one. */
 .meteo-current-instrument {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 1.1rem;
 }
@@ -616,8 +621,12 @@
 
 /* ---------- rose ---------- */
 
+/* flex, not inline-flex: the rose's own SVG is fixed-size, but the rose
+ * sits in a card sized by its consumer, same as .meteo-current. inline-flex
+ * shrank this to the SVG's width and left it hugging the card's left edge,
+ * with the rest of the card empty. */
 .meteo-wind-rose {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;

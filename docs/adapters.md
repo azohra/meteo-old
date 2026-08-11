@@ -1,10 +1,10 @@
 # Adapters
 
 How station hardware becomes wire documents. Three vendors are built in —
-WindNerd, WeatherFlow Tempest, Campbell Scientific loggers (per-station IANA
-zones with context-disambiguated DST handling) — and anything else plugs in
-as a custom adapter. The documents they produce are specified in
-[wire-contract.md](wire-contract.md).
+WindNerd, WeatherFlow Tempest, Campbell Scientific — and anything else plugs
+in as a custom adapter. Campbell Scientific loggers carry per-station IANA
+zones with context-disambiguated DST handling. The documents they produce
+are specified in [wire-contract.md](wire-contract.md).
 
 ## The custom arm
 

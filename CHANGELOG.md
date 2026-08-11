@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.6.1 — 2026-08-10
+
+The Pages site becomes the one link that carries everything: brand, demo,
+and the documentation itself.
+
+- **The live site renders the real docs** — every `docs/*.md` page (and the
+  README) is imported raw at build time and rendered in place, with in-repo
+  links rewritten to in-page navigation and repo assets served from raw
+  GitHub URLs. Nothing is copy-pasted, so the site cannot drift from the
+  committed docs.
+- **A real landing** — the wordmark (theme-swapped), a hero that leads with
+  the wire contract and names the headless core as first-class, vendor and
+  documentation panels, and a header that carries the brand instead of typed
+  text.
+- **Two component-skin fixes** (`styles.css`): `.meteo-current-instrument`
+  wraps instead of overflowing a narrow card, and `.meteo-wind-rose` centers
+  in a consumer-sized card (`flex`, not `inline-flex`).
+- **Editorial pass over the docs** — the season/UTC-offset explanation now
+  lives once (getting-started.md; the README states the fact and links),
+  hedged "(yet)" phrasings replaced with declarative boundaries, and
+  adapters.md's opening untangled.
+
 ## 0.6.0 — 2026-08-10
 
 A season, not a window: the live six-hour card gets a long-range sibling,

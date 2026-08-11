@@ -1,6 +1,6 @@
 {
   "name": "@azohra/meteo",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Azohra Meteo: open tooling for wind-sport weather. First capability — station: heterogeneous weather-station feeds behind one wire contract, vendor adapters, a mountable feed handler, and native rendering as React components or framework-free custom elements.",
   "license": "MIT",
   "type": "module",
