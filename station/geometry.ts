@@ -7,7 +7,7 @@
  * Charts are drawn at one SVG unit per CSS pixel: a viewBox scaled to fit
  * shrinks its own labels with it. */
 import type { History, HistoryPoint } from "./contract.js";
-import { KMH_PER_MPS, degrees, isCalm, normalizeDegrees, radians } from "./derive.js";
+import { CALM_THRESHOLD_MPS, KMH_PER_MPS, degrees, isCalm, normalizeDegrees, radians } from "./derive.js";
 
 export type ChartFrame = {
   height: number;
@@ -176,6 +176,35 @@ export function meanDirectionDeg(points: ReadonlyArray<HistoryPoint>): number | 
   return normalizeDegrees(degrees(Math.atan2(vector.sin, vector.cos)));
 }
 
+/* True vector mean over a point window: each sample's (speed, direction) is
+ * decomposed into components, averaged, and the average vector is reported
+ * back as (magnitude, direction) — the "vector-averaged" wind a long-window
+ * summary (a daily pattern, a season) wants, as distinct from the scalar
+ * mean speed averagePoints plots. A calm sample (no direction) contributes a
+ * zero vector: it pulls the resultant magnitude down exactly as a real
+ * windless moment should, with no direction needed to do trigonometry with.
+ * Empty input reports zero speed and no direction. */
+export type WindVector = { directionDeg: number | null; speedMps: number };
+
+export function vectorMeanWind(points: ReadonlyArray<HistoryPoint>): WindVector {
+  if (points.length === 0) return { directionDeg: null, speedMps: 0 };
+  let u = 0;
+  let v = 0;
+  for (const point of points) {
+    if (point.directionDeg == null) continue;
+    const angle = radians(point.directionDeg);
+    u += point.averageMps * Math.sin(angle);
+    v += point.averageMps * Math.cos(angle);
+  }
+  u /= points.length;
+  v /= points.length;
+  const speedMps = Math.hypot(u, v);
+  return {
+    directionDeg: speedMps < CALM_THRESHOLD_MPS ? null : normalizeDegrees(degrees(Math.atan2(u, v))),
+    speedMps,
+  };
+}
+
 export type Vane = { directionDeg: number | null; midMs: number };
 
 /* Thinned so vanes cannot touch. Each is the vector mean of its window, not
@@ -329,6 +358,112 @@ export function windRose(
       maxGustMps: sector.gusts.length === 0 ? null : Math.max(...sector.gusts),
     })),
   };
+}
+
+export const DAILY_PATTERN_DEFAULT_SLOT_MINUTES = 180;
+
+export type DailyPatternSlot = {
+  /* Minutes since local midnight this slot begins at (0, slotMinutes,
+   * 2×slotMinutes, …) — a bucket boundary, not a sample's own timestamp. */
+  startMinuteOfDay: number;
+  sampleCount: number;
+  directionDeg: number | null;
+  speedMps: number;
+};
+
+/* A typical day: every point is dropped into a fixed-width slot by its
+ * time-of-day alone (the calendar date is discarded), and each slot reports
+ * the vector-mean wind of everything that ever fell into it — the same shape
+ * as a season's "daily pattern" chart, built from raw history rather than
+ * trusting an upstream's own pre-aggregation.
+ *
+ * "Local" here is a plain UTC offset, not an IANA zone: matching the
+ * "local standard time (no DST)" a station page itself commits to, and
+ * keeping this module free of Intl / zoneinfo. A consumer wanting real
+ * zone+DST behaviour resolves its own offset (e.g. via the station's
+ * declared IANA zone) and passes the minutes across; the default of 0
+ * buckets in UTC. */
+export function dailyPattern(
+  points: ReadonlyArray<HistoryPoint>,
+  options: { slotMinutes?: number; utcOffsetMinutes?: number } = {},
+): DailyPatternSlot[] {
+  const slotMinutes = options.slotMinutes ?? DAILY_PATTERN_DEFAULT_SLOT_MINUTES;
+  if (slotMinutes <= 0 || 1440 % slotMinutes !== 0) {
+    throw new Error(`dailyPattern: slotMinutes must evenly divide 1440, got ${slotMinutes}`);
+  }
+  const utcOffsetMinutes = options.utcOffsetMinutes ?? 0;
+  const slotCount = 1440 / slotMinutes;
+  const buckets: HistoryPoint[][] = Array.from({ length: slotCount }, () => []);
+  for (const point of points) {
+    const minuteOfDay = floorMod(
+      Math.floor(Date.parse(point.observedAt) / 60_000) + utcOffsetMinutes,
+      1440,
+    );
+    (buckets[Math.floor(minuteOfDay / slotMinutes)] as HistoryPoint[]).push(point);
+  }
+  return buckets.map((bucket, index) => ({
+    startMinuteOfDay: index * slotMinutes,
+    sampleCount: bucket.length,
+    ...vectorMeanWind(bucket),
+  }));
+}
+
+function floorMod(value: number, modulus: number): number {
+  return ((value % modulus) + modulus) % modulus;
+}
+
+/* Meteorological seasons: fixed three-month groups (DJF/MAM/JJA/SON),
+ * Northern-hemisphere-named — a Southern-hemisphere consumer swaps the
+ * label it shows, not the months a season actually spans. */
+export const METEOROLOGICAL_SEASON_MONTHS: Record<"fall" | "spring" | "summer" | "winter", number[]> = {
+  winter: [12, 1, 2],
+  spring: [3, 4, 5],
+  summer: [6, 7, 8],
+  fall: [9, 10, 11],
+};
+
+/* filterByMonth/filterByTimeOfDay: the two axes WindRose's own consumers
+ * keep reaching for (a season picker, a time-of-day picker) — narrowing
+ * WHICH history points feed the rose or the chart, never how those points
+ * are drawn. Composable rather than a combined "window" object: a season
+ * rose, a time-of-day rose, and a season-AND-time-of-day rose are all just
+ * one or two calls piped together.
+ *
+ * "Local" is a plain UTC offset, not an IANA zone — dailyPattern's same
+ * choice, for the same reason (no Intl/zoneinfo in this module, and it
+ * matches the "local standard time (no DST)" a station page itself
+ * commits to). */
+
+export function filterByMonth(
+  points: ReadonlyArray<HistoryPoint>,
+  months: ReadonlyArray<number>,
+  utcOffsetMinutes = 0,
+): HistoryPoint[] {
+  const wanted = new Set(months);
+  return points.filter((point) => wanted.has(localMonth(point.observedAt, utcOffsetMinutes)));
+}
+
+function localMonth(observedAt: string, utcOffsetMinutes: number): number {
+  return new Date(Date.parse(observedAt) + utcOffsetMinutes * 60_000).getUTCMonth() + 1;
+}
+
+/* [fromMinute, toMinute) of the day, in local minutes; fromMinute > toMinute
+ * wraps past midnight (a "night" window, say 21:00–06:00), the same
+ * half-open convention dailyPattern's own slots use. */
+export function filterByTimeOfDay(
+  points: ReadonlyArray<HistoryPoint>,
+  fromMinute: number,
+  toMinute: number,
+  utcOffsetMinutes = 0,
+): HistoryPoint[] {
+  const wraps = fromMinute > toMinute;
+  return points.filter((point) => {
+    const minute = floorMod(
+      Math.floor(Date.parse(point.observedAt) / 60_000) + utcOffsetMinutes,
+      1440,
+    );
+    return wraps ? minute >= fromMinute || minute < toMinute : minute >= fromMinute && minute < toMinute;
+  });
 }
 
 /* Silence beyond this many declared periods is an outage, not a long

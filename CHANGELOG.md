@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.6.0 — 2026-08-10
+
+A season, not a window: the live six-hour card gets a long-range sibling,
+built on what the WindNerd records endpoint turns out to hold once you ask
+it for more than a live poll.
+
+- **`loadWindnerdStation` accepts `recordPeriodMinutes`** — the vendor's own
+  `period` parameter, confirmed live against a real whitelist (1/15/60/180
+  minutes; anything else 404s "Wrong query"). A season's rose or a typical
+  day pulls months of history as vendor-side aggregates instead of raw
+  one-minute samples; `history.periodMinutes` on the returned document
+  always reflects the resolution actually served, so `historyGaps` keeps
+  judging dropouts correctly regardless of which one was asked for. Fixed a
+  latent cache-key collision this option would otherwise have introduced (the
+  cache key didn't carry the period), and gave long/coarse pulls their own,
+  longer TTL.
+- **`parseWindnerdRecords` reads `time_offset`** into `utcOffsetMinutes` —
+  the vendor's 180-minute aggregate buckets by the station's own local
+  standard time, not UTC, and this is the field that says by how much.
+  Present only at period 180; `loadWindnerdStation` doesn't yet surface it
+  on the `Station` it returns (a wire-contract addition for later).
+- **`dailyPattern`** — a new geometry primitive: every history point drops
+  into a fixed-width time-of-day slot (the calendar date discarded) and each
+  slot reports the *vector* mean of everything that ever fell into it, via
+  the new `vectorMeanWind`. `DailyPattern` is its component, a React and
+  Elements twin pair reusing `WindHistoryChart`'s frame/scale/vane geometry
+  almost unchanged, parity-tested like everything else here.
+- **`filterByMonth` / `filterByTimeOfDay` / `METEOROLOGICAL_SEASON_MONTHS`**
+  — pure filters over `HistoryPoint[]`, composable ahead of `<WindRose
+  points={...} />`: a season's rose, a time-of-day rose, or both together are
+  just one or two calls piped in front of the same rose math.
+- **A live demo** (`examples/demo`, deployed via GitHub Pages) — a new
+  "Seasons" section with month/season and time-of-day controls over
+  fourteen months of *generated* history (`examples/shared/fakeStation.mjs`,
+  seeded and deterministic — never a real station's data). The README
+  gallery gains two images built the same way.
+
 ## 0.5.0 — 2026-08-10
 
 The namespace wave, taken while the consumer count is one: everything the

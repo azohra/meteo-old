@@ -40,6 +40,11 @@ export type StationStrings = {
   elevation: (metres: number) => string;
   percentCalm: (percent: number) => string;
   percentShare: (percent: number) => string;
+  /* The daily-pattern caption: a plain sample count when the source cadence
+   * is unknown (raw points, no resolved station), a true fraction when it
+   * is — never a fabricated percentage. */
+  dailyPatternSamples: (sampleCount: number) => string;
+  dailyPatternCoverage: (sampleCount: number, expectedCount: number) => string;
   /* Spelled-out compass words for assistive tech: "NW 305°" reads as
    * letters; "from northwest, 305 degrees" reads as weather. The visible
    * sixteen abbreviations come from compassDirection; these are their spoken
@@ -108,6 +113,8 @@ export type StationStrings = {
     chart: (stationName: string) => string;
     table: (stationCount: number) => string;
     current: (stationName: string) => string;
+    dailyPattern: (stationName: string) => string;
+    dailyPatternGeneric: string;
     /* The Direction atom's sentence; `spoken` is the compassSpoken word. */
     direction: (spoken: string, deg: number) => string;
     readout: (stationName: string) => string;
@@ -148,6 +155,9 @@ export const defaultStrings: StationStrings = {
   elevation: (metres) => `${metres} m`,
   percentCalm: (percent) => `${percent}% calm`,
   percentShare: (percent) => `${percent}%`,
+  dailyPatternSamples: (sampleCount) => `${sampleCount} samples`,
+  dailyPatternCoverage: (sampleCount, expectedCount) =>
+    `${sampleCount} samples · ${Math.round((sampleCount / Math.max(1, expectedCount)) * 100)}%`,
   compassSpoken: {
     N: "north",
     NNE: "north-northeast",
@@ -238,6 +248,8 @@ export const defaultStrings: StationStrings = {
       `Wind history at ${stationName}: the band spans lull to gust, the line is the average, and the vanes below point where the wind blew to.`,
     table: (stationCount) => `Live readings from ${stationCount} stations`,
     current: (stationName) => `Current conditions at ${stationName}`,
+    dailyPattern: (stationName) => `Typical day at ${stationName}, averaged across the full history`,
+    dailyPatternGeneric: "Typical day, averaged across the full history",
     direction: (spoken, deg) => `from ${spoken}, ${deg} degrees`,
     readout: (stationName) => `Inspected reading at ${stationName}`,
     rose: (stationName) => `Wind direction distribution at ${stationName}`,

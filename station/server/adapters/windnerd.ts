@@ -4,6 +4,14 @@
  * "unavailable". The hardware archives one record a minute, and both the
  * current reading and the history come out of the same records call.
  *
+ * The vendor's own `period` parameter is a fixed whitelist, confirmed live
+ * (every other value 404s "Wrong query"): 1-minute raw records, or a
+ * 15/60/180-minute vendor-side aggregate. A live 6-hour window wants the
+ * raw minute; a season's wind rose or a daily pattern wants 180-minute
+ * buckets, or pulling months of history at 1-minute resolution would be
+ * enormous. Choosing which is the caller's call — recordPeriodMinutes,
+ * below — not something this adapter guesses from historyHours.
+ *
  * Units: the vendor speaks km/h. Validation happens in vendor units at the
  * vendor boundary (parseWindnerdRecords); conversion to the wire's m/s
  * happens at Reading/HistoryPoint construction. */
@@ -16,7 +24,13 @@ import { fetchUpstreamText } from "../environment.js";
 
 const WINDNERD_RECORDS_URL = "https://windnerd.net/api/records";
 const RECORD_PERIOD_MINUTES = 1;
+export const WINDNERD_RECORD_PERIODS_MINUTES = [1, 15, 60, 180] as const;
+export type WindnerdRecordPeriodMinutes = (typeof WINDNERD_RECORD_PERIODS_MINUTES)[number];
 const CACHE_TTL_SECONDS = 60;
+/* A past window at 15/60/180-minute resolution is settled history, not a
+ * live reading — re-fetching it every minute buys nothing. Only the raw
+ * 1-minute period keeps the short, "still moving" TTL above. */
+const AGGREGATE_CACHE_TTL_SECONDS = 900;
 
 /* How far behind the reading's own record a sensor value may lag and still
  * serve as "current". WindNerd's hide-daytime-temperatures feature lets an
@@ -33,6 +47,14 @@ const STATION_PRESSURE_MAX_HPA = 1100;
 export type WindnerdAdapterOptions = StationAdapterOptions & {
   /* The records endpoint, overridable for tests only. */
   recordsUrl?: string;
+  /* One of WINDNERD_RECORD_PERIODS_MINUTES; defaults to the live 1-minute
+   * raw record. Any other value is rejected before the network call — a
+   * typo here should degrade the station honestly, not spend a request on
+   * a guaranteed vendor 404. */
+  recordPeriodMinutes?: WindnerdRecordPeriodMinutes;
+  /* Override for the cache TTL a resolved period earns; see
+   * AGGREGATE_CACHE_TTL_SECONDS for the default the aggregate periods get. */
+  cacheTtlSeconds?: number;
 };
 
 /* Parallel series indexed against date_utc, as the API returns them —
@@ -51,7 +73,21 @@ export type WindnerdRecords = {
    * wire never carries the raw value. All-null when the config declares no
    * pressure board. */
   stationPressureHpa: Array<number | null>;
+  /* The vendor's own local-standard-time offset in minutes (local = UTC +
+   * utcOffsetMinutes — the same convention dailyPattern/filterByMonth/
+   * filterByTimeOfDay use for their own utcOffsetMinutes), confirmed live
+   * to ride only the 180-minute aggregate period; null at every other
+   * period, where the vendor sends no such field. A caller pulling 180 to
+   * build a real DailyPattern or seasonal WindRose reads this once and
+   * passes it straight through — the one number that turns UTC-default
+   * bucketing into the station's own local time. */
+  utcOffsetMinutes: number | null;
 };
+
+/* A real-world UTC offset: -12:00 (west of the date line) to +14:00 (Kiribati) —
+ * outside that, time_offset is a lying or misparsed field, not a station. */
+const UTC_OFFSET_MIN_MINUTES = -720;
+const UTC_OFFSET_MAX_MINUTES = 840;
 
 export const loadWindnerdStation = defineStationAdapter<
   WindnerdStationConfig,
@@ -84,18 +120,27 @@ export const loadWindnerdStation = defineStationAdapter<
   /* Current mode costs the same upstream hit — the records call is the only
    * data source — so only the returned document slims (in the belt). */
   load: async (config, { environment, historyHours, options }) => {
+    const periodMinutes = options.recordPeriodMinutes ?? RECORD_PERIOD_MINUTES;
+    if (!(WINDNERD_RECORD_PERIODS_MINUTES as readonly number[]).includes(periodMinutes)) {
+      throw new Error(
+        `WindNerd location ${config.locationId}: recordPeriodMinutes must be one of ` +
+          `${WINDNERD_RECORD_PERIODS_MINUTES.join(", ")}, got ${periodMinutes}`,
+      );
+    }
     const now = environment.now();
     const url = new URL(options.recordsUrl ?? WINDNERD_RECORDS_URL);
     url.searchParams.set("location_id", String(config.locationId));
     url.searchParams.set("from", new Date(now.getTime() - historyHours * 3_600_000).toISOString());
     url.searchParams.set("to", now.toISOString());
-    url.searchParams.set("period", String(RECORD_PERIOD_MINUTES));
+    url.searchParams.set("period", String(periodMinutes));
 
     const records = parseWindnerdRecords(
       await fetchUpstreamText(environment, {
         url,
-        cacheKey: `windnerd/${config.locationId}/${historyHours}`,
-        cacheTtlSeconds: CACHE_TTL_SECONDS,
+        cacheKey: `windnerd/${config.locationId}/${historyHours}/${periodMinutes}`,
+        cacheTtlSeconds:
+          options.cacheTtlSeconds ??
+          (periodMinutes === RECORD_PERIOD_MINUTES ? CACHE_TTL_SECONDS : AGGREGATE_CACHE_TTL_SECONDS),
         subject: `WindNerd location ${config.locationId}`,
       }),
       config.locationId,
@@ -122,7 +167,7 @@ export const loadWindnerdStation = defineStationAdapter<
         windChillC: null,
         conditions: config.hasPressure ? windnerdConditions(records, points, config, lastMs) : null,
       },
-      history: { periodMinutes: RECORD_PERIOD_MINUTES, points },
+      history: { periodMinutes, points },
     };
   },
 });
@@ -221,7 +266,27 @@ export function parseWindnerdRecords(
           STATION_PRESSURE_MAX_HPA,
         )
       : dates.map(() => null),
+    utcOffsetMinutes: parseUtcOffsetMinutes(records.time_offset, locationId),
   };
+}
+
+/* Present only on the 180-minute aggregate period, one entry per record, all
+ * equal in every live response seen — but read as "the first number given"
+ * rather than asserted equal, so a vendor that ever varies it mid-window
+ * (a real DST transition, despite the "no DST" claim) degrades to null
+ * instead of throwing a station out over a field this adapter only uses
+ * opportunistically. Absent entirely at every other period: null, not a
+ * missing-field error. */
+function parseUtcOffsetMinutes(value: unknown, locationId: number): number | null {
+  if (!Array.isArray(value)) return null;
+  const first = value.find(
+    (entry): entry is number => typeof entry === "number" && Number.isFinite(entry),
+  );
+  if (first == null) return null;
+  if (first < UTC_OFFSET_MIN_MINUTES || first > UTC_OFFSET_MAX_MINUTES) {
+    throw new Error(`WindNerd location ${locationId} returned an invalid time_offset`);
+  }
+  return first;
 }
 
 /* The newest non-null sample, provided its record is within the honesty

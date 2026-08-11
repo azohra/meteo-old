@@ -34,6 +34,7 @@ export type { StationFeedContextValue } from "./components/StationFeedProvider.j
 export { StationStrip } from "./components/StationStrip.js";
 export { TrendChart } from "./components/TrendChart.js";
 export { WindArrow } from "./components/WindArrow.js";
+export { DailyPattern } from "./components/DailyPattern.js";
 export { WindHistoryChart } from "./components/WindHistoryChart.js";
 export { WindRose } from "./components/WindRose.js";
 /* StationCard is a compound: the pieces ride it as properties

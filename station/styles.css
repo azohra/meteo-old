@@ -75,6 +75,8 @@
 .meteo-station-card,
 .meteo-current,
 .meteo-wind-chart,
+.meteo-daily-pattern,
+.meteo-daily-pattern-na,
 .meteo-trend,
 .meteo-station-table,
 .meteo-wind-rose,
@@ -358,11 +360,13 @@
 
 /* ---------- history chart ---------- */
 
-.meteo-wind-chart {
+.meteo-wind-chart,
+.meteo-daily-pattern {
   width: 100%;
 }
 
 .meteo-wind-chart-na,
+.meteo-daily-pattern-na,
 .meteo-trend-na,
 .meteo-wind-rose-na {
   padding: 0.75rem 1rem;
@@ -374,8 +378,11 @@
   border-radius: var(--meteo-radius, 12px);
 }
 
-/* Fixed minimum height so pinning and unpinning never moves the chart. */
+/* Fixed minimum height so pinning and unpinning never moves the chart. The
+ * daily-pattern caption is static — no pin state — but shares the line so
+ * it never wears a different rhythm than the chart above it. */
 .meteo-wind-chart-readout,
+.meteo-daily-pattern-caption,
 .meteo-trend-readout {
   display: flex;
   flex-wrap: wrap;
@@ -396,11 +403,13 @@
 }
 
 .meteo-wind-chart-svg,
+.meteo-daily-pattern-svg,
 .meteo-trend-svg {
   display: block;
 }
 
 .meteo-wind-chart-svg text,
+.meteo-daily-pattern-svg text,
 .meteo-trend-svg text {
   font-family: var(--meteo-font, ui-sans-serif, system-ui, sans-serif);
   font-size: 10.5px;

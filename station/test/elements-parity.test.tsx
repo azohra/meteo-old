@@ -13,11 +13,13 @@
 import { fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactElement } from "react";
+import { defaultStrings } from "../index.js";
 import type { Station } from "../index.js";
 import {
   AirMatrix,
   BandChip,
   CurrentConditions,
+  DailyPattern,
   Dial,
   Direction,
   FreshnessBadge,
@@ -518,6 +520,55 @@ describe("parity: charts (fallback width, initial render)", () => {
       el.station = thin();
       el.setAttribute("series", "temperature");
     });
+  });
+
+  it("DailyPattern — from a station (coverage caption, void slots), and from raw points", () => {
+    /* Two days at one sample every 3 hours: every slot but one gets two
+     * samples, the last is left short of a second day's worth — a real void
+     * slot to exercise the hatch, and a true coverage fraction from the
+     * station's own periodMinutes. */
+    const dailyPatternStation = () =>
+      okStation({
+        history: {
+          periodMinutes: 180,
+          points: makePoints(15).map((point, index) => ({
+            ...point,
+            observedAt: iso(BASE_MS - (15 - index) * 3 * 3_600_000),
+          })),
+        },
+      });
+    expectParity(<DailyPattern station={dailyPatternStation()} />, "meteo-daily-pattern", (el) => {
+      el.station = dailyPatternStation();
+    });
+    expectParity(
+      <DailyPattern
+        slotMinutes={60}
+        station={dailyPatternStation()}
+        thresholds={thresholds}
+        unit="knots"
+      />,
+      "meteo-daily-pattern",
+      (el) => {
+        el.station = dailyPatternStation();
+        el.setAttribute("slot-minutes", "60");
+        el.setAttribute("thresholds", JSON.stringify(thresholds));
+        el.setAttribute("unit", "knots");
+      },
+    );
+    /* Raw points carry no station cadence: the caption falls back to a
+     * plain sample count instead of a fraction, in both bindings alike. */
+    expectParity(<DailyPattern points={makePoints(20)} />, "meteo-daily-pattern", (el) => {
+      el.points = makePoints(20);
+    });
+    const { reactDom, elementDom } = renderBoth(
+      <DailyPattern points={[]} />,
+      "meteo-daily-pattern",
+      (el) => {
+        el.points = [];
+      },
+    );
+    expect(reactDom).toBe(elementDom);
+    expect(reactDom).toContain(defaultStrings.noHistory);
   });
 });
 

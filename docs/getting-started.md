@@ -146,6 +146,67 @@ render the same DOM:
 composition, and SSR seeding are covered in [react.md](react.md); the tokens
 the components wear are in [theming.md](theming.md).
 
+## 3 · A season, not a window
+
+`loadWindnerdStation` accepts a resolution alongside the window. This is a
+direct-adapter option, not (yet) one `loadStationFeed`/`loadStationCurrent`
+forward — those two only ever pass `{ historyHours, mode, environment }`
+through to any vendor, windnerd included, so a season pull calls
+`loadWindnerdStation` itself rather than going through the fleet-feed API:
+
+```ts
+type WindnerdRecordPeriodMinutes = 1 | 15 | 60 | 180; // the vendor's own whitelist; anything else 404s
+
+recordPeriodMinutes?: WindnerdRecordPeriodMinutes; // default 1 (live, raw)
+cacheTtlSeconds?: number;                          // default: 60s at period 1, 900s otherwise
+```
+
+A live card wants `historyHours: 6` at the default one-minute resolution. A
+season's rose wants months of history at a coarse resolution instead —
+`{ historyHours: 24 * 120, recordPeriodMinutes: 180 }` pulls four months as
+roughly six hundred three-hour aggregates, not two hundred thousand raw
+minutes. `history.periodMinutes` on the returned document always reflects
+the resolution actually served, so `historyGaps` and every duration-aware
+reader keep judging dropouts correctly regardless of which one you asked for.
+
+**The 180-minute aggregate buckets by the station's own local standard
+time, not UTC** — confirmed live: the local grid is the ordinary
+`00:00, 03:00, 06:00…`, but a station eight hours west of UTC has those
+boundaries arrive stamped `08:00Z, 11:00Z, 14:00Z…` — each `date_utc` is the
+correct UTC instant of its local boundary, not a UTC-aligned bucket.
+`dailyPattern` and the two filters below default to `utcOffsetMinutes: 0` —
+plain UTC — which will look entirely plausible right up until you compare
+it to the station's actual afternoon: pass your station's own standard-time
+offset (you configured it, or you own the hardware and already know it) to
+bucket in local time instead. The vendor's response carries that same
+offset too, as `time_offset` — one entry per record, not a single field, so
+`parseWindnerdRecords` takes the first — but only at period 180.
+`loadWindnerdStation` doesn't (yet) surface it on the `Station` it returns
+(that would be a wire-contract addition this pass didn't make); for now,
+only a caller running `parseWindnerdRecords` directly against the raw
+upstream text sees it, in the result's `utcOffsetMinutes`.
+
+Two pure functions narrow which points a component then sees, and one turns
+a whole history into a single day:
+
+```ts
+import {
+  METEOROLOGICAL_SEASON_MONTHS, // { winter, spring, summer, fall }: number[] (1-12)
+  filterByMonth,                // (points, months, utcOffsetMinutes?) => HistoryPoint[]
+  filterByTimeOfDay,            // (points, fromMinute, toMinute, utcOffsetMinutes?) => HistoryPoint[]
+  dailyPattern,                 // (points, { slotMinutes?, utcOffsetMinutes? }) => DailyPatternSlot[]
+} from "@azohra/meteo/station";
+```
+
+`filterByTimeOfDay`'s `fromMinute > toMinute` wraps past midnight (a "night"
+window). Both filters and `dailyPattern` take a plain UTC-offset minutes —
+not an IANA zone — matching the "local standard time, no DST" a station page
+itself commits to; pass 0 (the default) to work in UTC. Feed the filtered
+points straight into `<WindRose points={...} />`; feed a whole history's
+points into `<DailyPattern points={...} />` (or `station={...}`, which also
+turns the caption into a true coverage fraction via the station's own
+`periodMinutes` instead of a bare sample count) and it buckets internally.
+
 ## Where next
 
 | Topic | Page |

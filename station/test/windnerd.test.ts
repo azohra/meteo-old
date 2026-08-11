@@ -121,6 +121,29 @@ describe("parseWindnerdRecords", () => {
       "WindNerd location 8675 returned an invalid",
     );
   });
+
+  it("reads utcOffsetMinutes only where the vendor sends it — the 180-minute aggregate", () => {
+    /* The 1-minute payload (this fixture's default) carries no time_offset
+     * at all: confirmed live, not assumed. */
+    expect(parseWindnerdRecords(windnerdPayload(), 8675).utcOffsetMinutes).toBeNull();
+    expect(
+      parseWindnerdRecords(windnerdPayload({ time_offset: [-480, -480, -480] }), 8675)
+        .utcOffsetMinutes,
+    ).toBe(-480);
+  });
+
+  it("takes the first given time_offset rather than requiring every record to agree", () => {
+    expect(
+      parseWindnerdRecords(windnerdPayload({ time_offset: [null, -480, -480] }), 8675)
+        .utcOffsetMinutes,
+    ).toBe(-480);
+  });
+
+  it("rejects a time_offset outside a real UTC offset", () => {
+    expect(() =>
+      parseWindnerdRecords(windnerdPayload({ time_offset: [-1000, -1000, -1000] }), 8675),
+    ).toThrow("WindNerd location 8675 returned an invalid time_offset");
+  });
 });
 
 describe("loadWindnerdStation", () => {
@@ -463,5 +486,38 @@ describe("loadWindnerdStation", () => {
     await loadWindnerdStation(config, { environment });
     await loadWindnerdStation(config, { environment });
     expect(requests).toHaveLength(1);
+  });
+
+  it("requests the vendor's own aggregate period and carries it onto the wire", async () => {
+    const { environment, requests } = stubEnvironment(() => windnerdPayload());
+    const station = await loadWindnerdStation(config, {
+      environment,
+      recordPeriodMinutes: 180,
+    });
+    if (station.status !== "ok") throw new Error("expected ok");
+    expect(requests[0]?.searchParams.get("period")).toBe("180");
+    /* historyGaps and wind-run both read this, so a resolved period that
+     * silently stayed 1 would misjudge dropouts on every non-default call. */
+    expect(station.history?.periodMinutes).toBe(180);
+  });
+
+  it("rejects a period outside the vendor's whitelist before any request", async () => {
+    const { environment, requests } = stubEnvironment(() => windnerdPayload());
+    const station = await loadWindnerdStation(config, {
+      environment,
+      // @ts-expect-error deliberately outside WindnerdRecordPeriodMinutes
+      recordPeriodMinutes: 30,
+    });
+    if (station.status !== "unavailable") throw new Error("expected unavailable");
+    expect(station.reason).toBe("contract_break");
+    expect(requests).toHaveLength(0);
+  });
+
+  it("keys the cache by period, so a live pull and a season pull never collide", async () => {
+    const { environment, requests } = stubEnvironment(() => windnerdPayload());
+    await loadWindnerdStation(config, { environment, recordPeriodMinutes: 1 });
+    await loadWindnerdStation(config, { environment, recordPeriodMinutes: 180 });
+    await loadWindnerdStation(config, { environment, recordPeriodMinutes: 180 });
+    expect(requests).toHaveLength(2);
   });
 });

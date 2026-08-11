@@ -80,6 +80,7 @@ Every react component has its tag twin, rendering the identical DOM:
 | `<meteo-wind-history-chart>` | `WindHistoryChart` | `plot-height`; the full inspector (preview, pin by timestamp, touch-safe) |
 | `<meteo-trend-chart>` | `TrendChart` | `series="temperature|pressure"` required |
 | `<meteo-wind-rose>` | `WindRose` | `sector-count`; `points` / `favorableDirections` properties |
+| `<meteo-daily-pattern>` | `DailyPattern` | `slot-minutes`, `utc-offset-minutes`; `points` property |
 | `<meteo-station-table>` | `StationTable` | `stationMeta` property: `(station) => string \| Node \| null` |
 | `<meteo-station-strip>` | `StationStrip` | |
 | `<meteo-air-matrix>` | `AirMatrix` | Disclosure state is the element's own |

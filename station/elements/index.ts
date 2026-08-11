@@ -20,6 +20,7 @@ import {
 } from "./elements/atoms.js";
 import { AirMatrixElement } from "./elements/AirMatrixElement.js";
 import { CurrentConditionsElement } from "./elements/CurrentConditionsElement.js";
+import { DailyPatternElement } from "./elements/DailyPatternElement.js";
 import { DialElement } from "./elements/DialElement.js";
 import { FreshnessBadgeElement } from "./elements/FreshnessBadgeElement.js";
 import { SparklineElement } from "./elements/SparklineElement.js";
@@ -50,6 +51,7 @@ export {
 } from "./elements/atoms.js";
 export { AirMatrixElement } from "./elements/AirMatrixElement.js";
 export { CurrentConditionsElement } from "./elements/CurrentConditionsElement.js";
+export { DailyPatternElement } from "./elements/DailyPatternElement.js";
 export { DialElement, dialSvg } from "./elements/DialElement.js";
 export { FreshnessBadgeElement } from "./elements/FreshnessBadgeElement.js";
 export { SparklineElement, sparklineNode } from "./elements/SparklineElement.js";
@@ -79,6 +81,7 @@ export const meteoElementTags = {
   "meteo-air-matrix": AirMatrixElement,
   "meteo-band-chip": BandChipElement,
   "meteo-current-conditions": CurrentConditionsElement,
+  "meteo-daily-pattern": DailyPatternElement,
   "meteo-dial": DialElement,
   "meteo-direction": DirectionElement,
   "meteo-freshness-badge": FreshnessBadgeElement,

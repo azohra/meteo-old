@@ -213,6 +213,13 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.demo-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
 /* Strips stack; each line is the library's own chrome. */
 .demo-strips {
   display: grid;

@@ -15,12 +15,18 @@
  * explicit props and no provider in sight — the provider is a default,
  * never a requirement. */
 import { useEffect, useMemo, useState } from "react";
-import { speedUnitLabel } from "@azohra/meteo/station";
-import type { SpeedThresholds, SpeedUnit } from "@azohra/meteo/station";
+import {
+  METEOROLOGICAL_SEASON_MONTHS,
+  filterByMonth,
+  filterByTimeOfDay,
+  speedUnitLabel,
+} from "@azohra/meteo/station";
+import type { HistoryPoint, SpeedThresholds, SpeedUnit } from "@azohra/meteo/station";
 import {
   AirMatrix,
   BandChip,
   CurrentConditions,
+  DailyPattern,
   Dial,
   Direction,
   Gust,
@@ -38,6 +44,35 @@ import {
 import "@azohra/meteo/station/styles.css";
 import "./demo.css";
 import { buildDemoFeed } from "./fixtures";
+import { buildLongHistory } from "../../shared/fakeStation.mjs";
+
+type Season = "all" | "winter" | "spring" | "summer" | "fall";
+const SEASON_CHOICES: { value: Season; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "winter", label: "Winter" },
+  { value: "spring", label: "Spring" },
+  { value: "summer", label: "Summer" },
+  { value: "fall", label: "Fall" },
+];
+
+type TimeOfDay = "all" | "midday" | "night";
+const TIME_OF_DAY_CHOICES: { value: TimeOfDay; label: string }[] = [
+  { value: "all", label: "All day" },
+  { value: "midday", label: "Midday · 09–15" },
+  { value: "night", label: "Night · 21–06" },
+];
+
+function filteredBySeasonAndTimeOfDay(
+  points: HistoryPoint[],
+  season: Season,
+  timeOfDay: TimeOfDay,
+): HistoryPoint[] {
+  const byMonth = season === "all" ? points : filterByMonth(points, METEOROLOGICAL_SEASON_MONTHS[season]);
+  if (timeOfDay === "all") return byMonth;
+  return timeOfDay === "midday"
+    ? filterByTimeOfDay(byMonth, 9 * 60, 15 * 60)
+    : filterByTimeOfDay(byMonth, 21 * 60, 6 * 60);
+}
 
 /* The club thinks in km/h, so the thresholds SAY km/h — the library
  * converts onto the m/s wire once, internally, whatever display unit the
@@ -83,6 +118,12 @@ const SECTIONS: { id: string; title: string; nav: string; note: string }[] = [
     title: "Wind roses",
     nav: "Roses",
     note: "Launch Ridge wears its 260°–340° launch window as a judgment ring; the petals keep reporting distribution.",
+  },
+  {
+    id: "seasons",
+    title: "A season, not a window",
+    nav: "Seasons",
+    note: "Fourteen months of generated (never fetched) history behind one rose and one typical day — filterByMonth and filterByTimeOfDay narrow which points feed the rose; DailyPattern vector-averages the lot into a day.",
   },
   {
     id: "trends",
@@ -138,6 +179,18 @@ export default function App() {
   const [live, setLive] = useState(false);
   const [unit, setUnit] = useState<SpeedUnit>("kmh");
   const [theme, setTheme] = useState<Theme>("system");
+  const [season, setSeason] = useState<Season>("all");
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("all");
+
+  /* Generated once, at mount — settled history, not something the "simulate
+   * live" ticker has any business regenerating every two seconds. */
+  const [longHistory] = useState<HistoryPoint[]>(() =>
+    buildLongHistory({ nowMs: Date.now(), days: 420, periodMinutes: 15 }),
+  );
+  const filteredHistory = useMemo(
+    () => filteredBySeasonAndTimeOfDay(longHistory, season, timeOfDay),
+    [longHistory, season, timeOfDay],
+  );
 
   useEffect(() => {
     if (!live) return;
@@ -262,6 +315,46 @@ export default function App() {
               <div className="demo-panel">
                 <h3>Summit Logger — plain</h3>
                 <WindRose stationId="summit-logger" thresholds={null} />
+              </div>
+            </div>
+          </section>
+
+          <section className="demo-section" id="seasons">
+            <SectionHead id="seasons" />
+            <div className="demo-filter-row">
+              <div aria-label="Season" className="demo-segmented" role="group">
+                {SEASON_CHOICES.map((choice) => (
+                  <button
+                    aria-pressed={season === choice.value}
+                    key={choice.value}
+                    onClick={() => setSeason(choice.value)}
+                    type="button"
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+              <div aria-label="Time of day" className="demo-segmented" role="group">
+                {TIME_OF_DAY_CHOICES.map((choice) => (
+                  <button
+                    aria-pressed={timeOfDay === choice.value}
+                    key={choice.value}
+                    onClick={() => setTimeOfDay(choice.value)}
+                    type="button"
+                  >
+                    {choice.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="demo-grid demo-grid-roses">
+              <div className="demo-panel">
+                <h3>WindRose — {filteredHistory.length.toLocaleString()} of the year's samples</h3>
+                <WindRose points={filteredHistory} />
+              </div>
+              <div className="demo-panel">
+                <h3>DailyPattern — the whole 14 months, vector-averaged</h3>
+                <DailyPattern points={longHistory} />
               </div>
             </div>
           </section>

@@ -73,6 +73,7 @@ Per-station components take `station` (or `stationId`); fleet components take `s
 | `WindHistoryChart` | Lull–gust band + graded mean. `thresholds` (guide labels show your declared numbers), `plotHeight` |
 | `TrendChart` | Temperature (°C) or sea-level pressure (hPa) over history. `series: "temperature" \| "pressure"`; null gaps break the trace, never interpolated. No `unit` — the units are the series' own |
 | `WindRose` | Direction shares. `station`/`stationId` or raw `points`, `sectorCount`, `thresholds`, `favorableDirections`. No `unit` — the rose shows percentages |
+| `DailyPattern` | A typical day: every point bucketed by time-of-day and vector-averaged. `station`/`stationId` or raw `points`, `slotMinutes` (default 180), `utcOffsetMinutes`, `thresholds` |
 | `StationTable` | One row per `stations` entry; unavailable rows keep their geometry. `servedAt`, `receivedAtMs`, `stationMeta` — the sub-label under each name (default: the source attribution; render the sampling window, a distance, anything the station itself can say) |
 | `StationStrip` | One station on one line — name, wind, lull/gust, FROM, temp, updated + freshness. `station`/`stationId`, `servedAt`, `receivedAtMs`. Absent values dash in place; a capability the station lacks omits its cell; an unavailable station keeps the line, reason in words |
 | `AirMatrix` | Humidity → lightning behind a live disclosure; columns only for conditions-capable `stations` |
